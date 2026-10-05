@@ -1,98 +1,99 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import React, { useEffect } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
+import { router } from 'expo-router';
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+export default function Index() {
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      router.replace('/home');
+    }, 2500);
 
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
-    );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
-  );
-}
+    <View style={styles.container}>
 
-export default function HomeScreen() {
-  return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
+      <View style={styles.logoCircle}>
+        <Text style={styles.logo}>GJS</Text>
+      </View>
 
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
+      <Text style={styles.brand}>
+        GJS
+      </Text>
 
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
+      <Text style={styles.subtitle}>
+        MÓVEIS PLANEJADOS
+      </Text>
 
-        {Platform.OS === 'web' && <WebBadge />}
-      </SafeAreaView>
-    </ThemedView>
+      <View style={styles.slogan}>
+        <Text>PLANEJAR</Text>
+        <Text>CALCULAR</Text>
+        <Text>ORÇAR</Text>
+        <Text>REALIZAR</Text>
+      </View>
+
+      <Text style={styles.loading}>
+        Carregando...
+      </Text>
+
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#000',
     justifyContent: 'center',
-    flexDirection: 'row',
-  },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: Spacing.four,
     alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
   },
-  heroSection: {
-    alignItems: 'center',
+
+  logoCircle: {
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    borderWidth: 3,
+    borderColor: '#ff2028',
     justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
+    alignItems: 'center',
   },
-  title: {
-    textAlign: 'center',
+
+  logo: {
+    color: '#fff',
+    fontSize: 42,
+    fontWeight: '900',
   },
-  code: {
-    textTransform: 'uppercase',
+
+  brand: {
+    color: '#fff',
+    fontSize: 38,
+    fontWeight: '900',
+    marginTop: 28,
   },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
+
+  subtitle: {
+    color: '#ff2028',
+    fontSize: 15,
+    fontWeight: '800',
+    letterSpacing: 5,
+    marginTop: 5,
+  },
+
+  slogan: {
+    marginTop: 350,
+    alignItems: 'center',
+    gap: 10,
+  },
+
+  sloganText: {
+    color: '#999',
+  },
+
+  loading: {
+    color: '#ff2028',
+    fontSize: 12,
+    fontStyle: 'italic',
+    marginTop: 30,
   },
 });

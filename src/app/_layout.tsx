@@ -1,18 +1,25 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import { useColorScheme } from 'react-native';
+import { Stack } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
-import { AnimatedSplashOverlay } from '@/components/animated-icon';
-import AppTabs from '@/components/app-tabs';
-
-SplashScreen.preventAutoHideAsync();
-
-export default function TabLayout() {
-  const colorScheme = useColorScheme();
+export default function GJSLayout() {
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <AnimatedSplashOverlay />
-      <AppTabs />
-    </ThemeProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      {/* Correção: No iOS/Android moderno, apenas o estilo 'light' é necessário */}
+      {/* O fundo preto é herdado da própria janela/tela do aplicativo */}
+      <StatusBar style="light" />
+      
+      <Stack
+        screenOptions={{
+          headerShown: false, // Oculta o cabeçalho padrão
+          contentStyle: { backgroundColor: '#000000' }, // Isto garante o fundo preto em 100% da tela (inclusive sob a StatusBar)
+          animation: 'fade_from_bottom', 
+        }}
+      >
+        {/* Tela do formulário de novo projeto */}
+        <Stack.Screen name="index" />
+      </Stack>
+    </GestureHandlerRootView>
   );
 }
+
