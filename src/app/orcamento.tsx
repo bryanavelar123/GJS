@@ -1,315 +1,521 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
+  TextInput,
   TouchableOpacity,
   StyleSheet,
   ScrollView,
+  Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 
-export default function OrcamentoScreen() {
+export default function NovoOrcamentoScreen() {
   const router = useRouter();
+
+  const [projeto, setProjeto] = useState('');
+  const [cliente, setCliente] = useState('');
+
+  const [mdf, setMdf] = useState('');
+  const [ferragens, setFerragens] = useState('');
+  const [acessorios, setAcessorios] = useState('');
+  const [maoDeObra, setMaoDeObra] = useState('');
+  const [outros, setOutros] = useState('');
+
+  /*
+   * =====================================================
+   * VOLTAR
+   * =====================================================
+   *
+   * Se existir uma página anterior, volta para ela.
+   *
+   * Se não existir histórico, vai para a página inicial.
+   */
+  const voltar = () => {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/');
+    }
+  };
+
+  /*
+   * =====================================================
+   * CONVERTER VALOR
+   * =====================================================
+   */
+  const numero = (valor) => {
+    if (!valor) {
+      return 0;
+    }
+
+    let valorLimpo = String(valor)
+      .replace(/R\$/gi, '')
+      .replace(/\s/g, '');
+
+    /*
+     * Se tiver ponto e vírgula:
+     * 1.500,50 -> 1500.50
+     */
+    if (
+      valorLimpo.includes('.') &&
+      valorLimpo.includes(',')
+    ) {
+      valorLimpo = valorLimpo
+        .replace(/\./g, '')
+        .replace(',', '.');
+    } else if (valorLimpo.includes(',')) {
+      /*
+       * 1500,50 -> 1500.50
+       */
+      valorLimpo = valorLimpo.replace(',', '.');
+    }
+
+    valorLimpo = valorLimpo.replace(/[^\d.-]/g, '');
+
+    return Number(valorLimpo) || 0;
+  };
+
+  /*
+   * =====================================================
+   * TOTAL
+   * =====================================================
+   */
+  const total = useMemo(() => {
+    return (
+      numero(mdf) +
+      numero(ferragens) +
+      numero(acessorios) +
+      numero(maoDeObra) +
+      numero(outros)
+    );
+  }, [
+    mdf,
+    ferragens,
+    acessorios,
+    maoDeObra,
+    outros,
+  ]);
+
+  /*
+   * =====================================================
+   * MOEDA
+   * =====================================================
+   */
+  const formatarMoeda = (valor) => {
+    return valor.toLocaleString('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    });
+  };
+
+  /*
+   * =====================================================
+   * CRIAR ORÇAMENTO
+   * =====================================================
+   */
+  const criarOrcamento = () => {
+    if (!projeto.trim()) {
+      Alert.alert(
+        'Campo obrigatório',
+        'Digite o nome do projeto.'
+      );
+      return;
+    }
+
+    if (!cliente.trim()) {
+      Alert.alert(
+        'Campo obrigatório',
+        'Digite o nome do cliente.'
+      );
+      return;
+    }
+
+    Alert.alert(
+      'Orçamento criado!',
+      `O orçamento "${projeto}" foi criado com sucesso.\n\nValor total: ${formatarMoeda(total)}`,
+      [
+        {
+          text: 'OK',
+          onPress: () => {
+            voltar();
+          },
+        },
+      ]
+    );
+  };
 
   return (
     <View style={styles.container}>
+
       <ScrollView
-        showsVerticalScrollIndicator={false}
+        style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
-        {/* CABEÇALHO */}
+
+        {/* =================================================
+            CABEÇALHO
+        ================================================= */}
+
         <View style={styles.header}>
+
           <TouchableOpacity
-            onPress={() => router.back()}
+            onPress={voltar}
             style={styles.backButton}
+            activeOpacity={0.7}
           >
-            <Text style={styles.backBtn}>‹</Text>
+            <Text style={styles.backBtn}>
+              ‹
+            </Text>
           </TouchableOpacity>
 
-          <Text style={styles.title}>Orçamento</Text>
-
-          <View style={styles.headerSpace} />
-        </View>
-
-        {/* PROJETO */}
-        <View style={styles.projectCard}>
-          <View style={styles.imgPlaceholder}>
-            <Text style={styles.camera}>📸</Text>
-          </View>
-
-          <View style={styles.projectInfo}>
-            <Text style={styles.projName}>
-              Cozinha Moderna
-            </Text>
-
-            <Text style={styles.projClient}>
-              Cliente: Mariana
-            </Text>
-
-            <Text style={styles.projDate}>
-              12/09/2025
-            </Text>
-          </View>
-        </View>
-
-        {/* RESUMO DO ORÇAMENTO */}
-        <View style={styles.breakdown}>
-          <Text style={styles.sectionTitle}>
-            Resumo dos custos
+          <Text style={styles.title}>
+            Novo Orçamento
           </Text>
 
-          <View style={styles.row}>
-            <Text style={styles.label}>MDF e chapas</Text>
-            <Text style={styles.val}>R$ 1.850,00</Text>
-          </View>
+          <View style={styles.headerSpace} />
 
-          <View style={styles.row}>
-            <Text style={styles.label}>Ferragens</Text>
-            <Text style={styles.val}>R$ 320,00</Text>
-          </View>
+        </View>
 
-          <View style={styles.row}>
-            <Text style={styles.label}>Acessórios</Text>
-            <Text style={styles.val}>R$ 150,00</Text>
-          </View>
+        {/* =================================================
+            INFORMAÇÕES DO PROJETO
+        ================================================= */}
 
-          <View style={styles.row}>
-            <Text style={styles.label}>Mão de obra</Text>
-            <Text style={styles.val}>R$ 1.200,00</Text>
-          </View>
+        <View style={styles.card}>
 
-          <View style={styles.row}>
-            <Text style={styles.label}>Outros</Text>
-            <Text style={styles.val}>R$ 180,00</Text>
-          </View>
+          <Text style={styles.sectionTitle}>
+            Informações do projeto
+          </Text>
 
-          {/* TOTAL */}
-          <View style={[styles.row, styles.totalRow]}>
-            <Text style={styles.totalLabel}>da 
+          <Text style={styles.label}>
+            Nome do projeto
+          </Text>
+
+          <TextInput
+            value={projeto}
+            onChangeText={setProjeto}
+            placeholder="Ex: Cozinha Moderna"
+            placeholderTextColor="#666666"
+            style={styles.input}
+            autoCapitalize="sentences"
+            selectionColor="#FF2222"
+          />
+
+          <Text style={styles.label}>
+            Cliente
+          </Text>
+
+          <TextInput
+            value={cliente}
+            onChangeText={setCliente}
+            placeholder="Ex: Mariana"
+            placeholderTextColor="#666666"
+            style={styles.input}
+            autoCapitalize="words"
+            selectionColor="#FF2222"
+          />
+
+        </View>
+
+        {/* =================================================
+            CUSTOS
+        ================================================= */}
+
+        <View style={styles.card}>
+
+          <Text style={styles.sectionTitle}>
+            Custos do orçamento
+          </Text>
+
+          <CampoValor
+            label="MDF e chapas"
+            value={mdf}
+            onChangeText={setMdf}
+          />
+
+          <CampoValor
+            label="Ferragens"
+            value={ferragens}
+            onChangeText={setFerragens}
+          />
+
+          <CampoValor
+            label="Acessórios"
+            value={acessorios}
+            onChangeText={setAcessorios}
+          />
+
+          <CampoValor
+            label="Mão de obra"
+            value={maoDeObra}
+            onChangeText={setMaoDeObra}
+          />
+
+          <CampoValor
+            label="Outros"
+            value={outros}
+            onChangeText={setOutros}
+          />
+
+        </View>
+
+        {/* =================================================
+            TOTAL
+        ================================================= */}
+
+        <View style={styles.totalCard}>
+
+          <View style={styles.totalInfo}>
+
+            <Text style={styles.totalLabel}>
               Valor total
             </Text>
 
-            <Text style={styles.totalVal}>
-              R$ 3.700,00
+            <Text style={styles.totalDescription}>
+              Soma de todos os custos
             </Text>
+
           </View>
+
+          <Text style={styles.totalValue}>
+            {formatarMoeda(total)}
+          </Text>
+
         </View>
 
-        {/* BOTÕES */}
-        <View style={styles.actionsRow}>
-          <TouchableOpacity style={styles.btnSecondary}>
-            <Text style={styles.btnSecText}>
-              📄 Gerar PDF
-            </Text>
-          </TouchableOpacity>
+        {/* =================================================
+            BOTÃO
+        ================================================= */}
 
-          <TouchableOpacity style={styles.btnSecondary}>
-            <Text style={styles.btnSecText}>
-              🔗 Compartilhar
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* FINALIZAR */}
         <TouchableOpacity
-          style={styles.btnFinal}
-          onPress={() => router.replace('/home')}
+          style={styles.createButton}
+          onPress={criarOrcamento}
+          activeOpacity={0.8}
         >
-          <Text style={styles.btnFinalText}>
-            Finalizar Orçamento
+          <Text style={styles.createButtonText}>
+            Criar Orçamento
           </Text>
         </TouchableOpacity>
+
       </ScrollView>
+
     </View>
   );
 }
 
+/*
+ * =========================================================
+ * CAMPO DE VALOR
+ * =========================================================
+ */
+
+function CampoValor({
+  label,
+  value,
+  onChangeText,
+}) {
+  return (
+    <View style={styles.field}>
+
+      <Text style={styles.label}>
+        {label}
+      </Text>
+
+      <TextInput
+        value={value}
+        onChangeText={onChangeText}
+        placeholder="R$ 0,00"
+        placeholderTextColor="#666666"
+        keyboardType="decimal-pad"
+        style={styles.input}
+        selectionColor="#FF2222"
+      />
+
+    </View>
+  );
+}
+
+/*
+ * =========================================================
+ * ESTILOS
+ * =========================================================
+ */
+
 const styles = StyleSheet.create({
+
+  /*
+   * TELA
+   */
   container: {
     flex: 1,
     backgroundColor: '#000000',
   },
 
-  scrollContent: {
-    padding: 20,
-    paddingTop: 50,
-    paddingBottom: 30,
+  scroll: {
+    flex: 1,
   },
 
-  /* HEADER */
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingTop: 30,
+    paddingBottom: 50,
+  },
+
+  /*
+   * =======================================================
+   * HEADER
+   * =======================================================
+   */
 
   header: {
+    width: '100%',
+    height: 50,
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: 24,
   },
 
   backButton: {
-    width: 40,
-    height: 40,
+    width: 45,
+    height: 45,
     justifyContent: 'center',
     alignItems: 'flex-start',
   },
 
   backBtn: {
     color: '#FFFFFF',
-    fontSize: 38,
+    fontSize: 40,
     fontWeight: '300',
-    lineHeight: 40,
+    lineHeight: 42,
   },
 
   headerSpace: {
-    width: 40,
+    width: 45,
   },
 
   title: {
+    flex: 1,
     color: '#FFFFFF',
     fontSize: 20,
     fontWeight: 'bold',
+    textAlign: 'center',
   },
 
-  /* PROJETO */
+  /*
+   * =======================================================
+   * CARDS
+   * =======================================================
+   */
 
-  projectCard: {
-    flexDirection: 'row',
-    backgroundColor: '#111111',
-    padding: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginBottom: 24,
-    borderWidth: 1,
-    borderColor: '#222222',
-  },
-
-  imgPlaceholder: {
-    width: 55,
-    height: 55,
-    backgroundColor: '#222222',
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-
-  camera: {
-    fontSize: 22,
-  },
-
-  projectInfo: {
-    marginLeft: 12,
-  },
-
-  projName: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-    fontSize: 16,
-    marginBottom: 4,
-  },
-
-  projClient: {
-    color: '#888888',
-    fontSize: 12,
-    marginBottom: 3,
-  },
-
-  projDate: {
-    color: '#555555',
-    fontSize: 11,
-  },
-
-  /* RESUMO */
-
-  breakdown: {
+  card: {
     backgroundColor: '#111111',
     borderRadius: 12,
     padding: 16,
     borderWidth: 1,
     borderColor: '#222222',
-    marginBottom: 20,
+    marginBottom: 14,
   },
 
   sectionTitle: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: 'bold',
-    marginBottom: 8,
+    marginBottom: 18,
   },
 
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 13,
-    borderBottomWidth: 1,
-    borderBottomColor: '#222222',
+  /*
+   * =======================================================
+   * CAMPOS
+   * =======================================================
+   */
+
+  field: {
+    marginBottom: 14,
   },
 
   label: {
-    color: '#888888',
-    fontSize: 14,
+    color: '#AAAAAA',
+    fontSize: 13,
+    marginBottom: 7,
   },
 
-  val: {
+  input: {
+    width: '100%',
+    minHeight: 46,
+    backgroundColor: '#080808',
+    borderWidth: 1,
+    borderColor: '#333333',
+    borderRadius: 8,
     color: '#FFFFFF',
-    fontWeight: '500',
-    fontSize: 14,
+    fontSize: 15,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
   },
 
-  totalRow: {
-    borderBottomWidth: 0,
-    marginTop: 10,
-    paddingVertical: 8,
+  /*
+   * =======================================================
+   * TOTAL
+   * =======================================================
+   */
+
+  totalCard: {
+    backgroundColor: '#111111',
+    borderRadius: 12,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: '#222222',
+    marginBottom: 18,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+
+  totalInfo: {
+    flex: 1,
   },
 
   totalLabel: {
     color: '#FF2222',
-    fontWeight: 'bold',
     fontSize: 17,
+    fontWeight: 'bold',
   },
 
-  totalVal: {
+  totalDescription: {
+    color: '#777777',
+    fontSize: 12,
+    marginTop: 4,
+  },
+
+  totalValue: {
     color: '#FF2222',
+    fontSize: 21,
     fontWeight: 'bold',
-    fontSize: 20,
+    marginLeft: 15,
   },
 
-  /* BOTÕES */
+  /*
+   * =======================================================
+   * BOTÃO
+   * =======================================================
+   */
 
-  actionsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 20,
-  },
-
-  btnSecondary: {
-    flex: 0.48,
-    backgroundColor: '#111111',
-    padding: 14,
-    borderRadius: 8,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#333333',
-  },
-
-  btnSecText: {
-    color: '#FFFFFF',
-    fontWeight: '600',
-    fontSize: 13,
-  },
-
-  /* FINALIZAR */
-
-  btnFinal: {
+  createButton: {
+    width: '100%',
     backgroundColor: '#FF2222',
-    padding: 16,
+    minHeight: 54,
+    paddingHorizontal: 20,
     borderRadius: 8,
     alignItems: 'center',
-    marginTop: 10,
+    justifyContent: 'center',
   },
 
-  btnFinalText: {
+  createButtonText: {
     color: '#FFFFFF',
-    fontWeight: 'bold',
     fontSize: 16,
+    fontWeight: 'bold',
   },
+
 });

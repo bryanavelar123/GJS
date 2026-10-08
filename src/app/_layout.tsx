@@ -17,7 +17,7 @@ export default function GJSLayout() {
         }}
       >
         {/* Tela do formulário de novo projeto */}
-        <Stack.Screen name="index" />
+        <Stack.Screen name="index" />'
       </Stack>
     </GestureHandlerRootView>
   );

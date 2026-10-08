@@ -8,7 +8,7 @@ export default function HomeScreen() {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.welcome}>Olá, Gilson!</Text>
+        <Text style={styles.welcome}>Olá,Bryan!</Text>
         <Text style={styles.subWelcome}>Bem-vindo ao GJS Móveis Planejados</Text>
       </View>
 
