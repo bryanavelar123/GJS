@@ -82,7 +82,7 @@ export default function HomeScreen() {
           <TouchableOpacity
             key={project.id}
             style={styles.project}
-            onPress={() => router.push({ pathname: '/medidas', params: { projectId: project.id, name: project.name } } as any)}
+            onPress={() => router.push({ pathname: '/medidas-projeto', params: { projectId: project.id, name: project.name } } as any)}
             accessibilityRole="button"
           >
             <View style={styles.projectIcon}><Text style={styles.projectIconText}>G</Text></View>
