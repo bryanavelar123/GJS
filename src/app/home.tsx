@@ -1,86 +1,137 @@
-import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useCallback, useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { getSession, listProjects, Project, signOut } from '@/lib/backend';
 
 export default function HomeScreen() {
   const router = useRouter();
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const carregar = useCallback(async () => {
+    if (!getSession()) {
+      router.replace('/login');
+      return;
+    }
+    try {
+      setLoading(true);
+      setProjects(await listProjects());
+    } catch (error) {
+      Alert.alert('Erro ao carregar', error instanceof Error ? error.message : 'Falha de conexão.');
+    } finally {
+      setLoading(false);
+    }
+  }, [router]);
+
+  useFocusEffect(useCallback(() => { void carregar(); }, [carregar]));
+
+  const sair = async () => {
+    await signOut();
+    router.replace('/login');
+  };
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={styles.content}
+      refreshControl={<RefreshControl refreshing={loading} onRefresh={carregar} />}
+    >
       <View style={styles.header}>
-        <Text style={styles.welcome}>Olá,Bryan!</Text>
-        <Text style={styles.subWelcome}>Bem-vindo ao GJS Móveis Planejados</Text>
+        <View>
+          <Text style={styles.brand}>GJS</Text>
+          <Text style={styles.subtitle}>Montagem de Móveis</Text>
+        </View>
+        <TouchableOpacity onPress={sair} accessibilityRole="button">
+          <Text style={styles.logout}>Sair</Text>
+        </TouchableOpacity>
       </View>
 
-      {/* Grid de Ações Rápidas */}
-     
+      <View style={styles.hero}>
+        <Text style={styles.heroTag}>GESTÃO DE SERVIÇOS</Text>
+        <Text style={styles.heroTitle}>Projetos organizados, do orçamento à montagem.</Text>
+        <Text style={styles.heroText}>Cadastre clientes, medidas, materiais e valores com segurança.</Text>
+      </View>
+
       <View style={styles.grid}>
-        <TouchableOpacity style={[styles.card, styles.cardRed]} onPress={() => router.push('/novo-projeto')}>
-          <Text style={styles.cardIcon}>＋</Text>
-          <Text style={styles.cardText}>Novo Projeto</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity style={styles.card} onPress={() => router.push('/materiais')}>
-          <Text style={styles.cardIcon}>📦</Text>
-          <Text style={styles.cardText}>Materiais</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.card} onPress={() => router.push('/medidas')}>
-          <Text style={styles.cardIcon}>📐</Text>
-          <Text style={styles.cardText}>Medidas</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.card} onPress={() => router.push('/orcamento')}>
-          <Text style={styles.cardIcon}>💵</Text>
-          <Text style={styles.cardText}>Orçamentos</Text>
-        </TouchableOpacity>
+        <Action title="Novo projeto" icon="＋" primary onPress={() => router.push('/novo-projeto')} />
+        <Action title="Orçamento" icon="R$" onPress={() => router.push('/orcamento')} />
+        <Action title="Materiais" icon="▦" onPress={() => router.push('/materiais')} />
+        <Action title="Serviços" icon="✓" onPress={() => router.push('/explore')} />
       </View>
 
-      {/* Seção de Recentes */}
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Projetos recentes</Text>
-        <TouchableOpacity><Text style={styles.seeAll}>Ver todos ＞</Text></TouchableOpacity>
-      </View>
+      <Text style={styles.sectionTitle}>Projetos recentes</Text>
 
-      <View style={styles.projectList}>
-        {[
-          { id: '1', nome: 'Cozinha Moderna', cliente: 'Mariana', data: '12/09/2025' },
-          { id: '2', nome: 'Quarto Casal', cliente: 'João', data: '08/09/2025' }
-        ].map((proj) => (
-          <View key={proj.id} style={styles.projectItem}>
-            <View style={styles.projectImagePlaceholder}><Text style={{color: '#666'}}>📸</Text></View>
-            <View style={styles.projectInfo}>
-              <Text style={styles.projectName}>{proj.nome}</Text>
-              <Text style={styles.projectClient}>Cliente: {proj.cliente}</Text>
-              <Text style={styles.projectDate}>{proj.data}</Text>
+      {loading && projects.length === 0 ? (
+        <ActivityIndicator color="#650606" style={{ marginTop: 20 }} />
+      ) : projects.length === 0 ? (
+        <View style={styles.empty}>
+          <Text style={styles.emptyTitle}>Nenhum projeto ainda</Text>
+          <Text style={styles.emptyText}>Crie seu primeiro projeto para começar.</Text>
+        </View>
+      ) : (
+        projects.map((project) => (
+          <TouchableOpacity
+            key={project.id}
+            style={styles.project}
+            onPress={() => router.push({ pathname: '/medidas', params: { projectId: project.id, name: project.name } } as any)}
+            accessibilityRole="button"
+          >
+            <View style={styles.projectIcon}><Text style={styles.projectIconText}>G</Text></View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.projectName}>{project.name}</Text>
+              <Text style={styles.projectMeta}>{project.environment} · {project.status}</Text>
             </View>
-            <Text style={styles.arrow}>＞</Text>
-          </View>
-        ))}
-      </View>
+            <Text style={styles.arrow}>›</Text>
+          </TouchableOpacity>
+        ))
+      )}
     </ScrollView>
   );
 }
 
+function Action({ title, icon, primary, onPress }: { title: string; icon: string; primary?: boolean; onPress: () => void }) {
+  return (
+    <TouchableOpacity style={[styles.action, primary && styles.actionPrimary]} onPress={onPress} accessibilityRole="button">
+      <Text style={[styles.actionIcon, primary && styles.actionPrimaryText]}>{icon}</Text>
+      <Text style={[styles.actionText, primary && styles.actionPrimaryText]}>{title}</Text>
+    </TouchableOpacity>
+  );
+}
+
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#000000', padding: 20, paddingTop: 50 },
-  header: { marginBottom: 24 },
-  welcome: { color: '#FFF', fontSize: 24, fontWeight: 'bold' },
-  subWelcome: { color: '#888', fontSize: 14, marginTop: 4 },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginBottom: 30 },
-  card: { width: '48%', backgroundColor: '#111', padding: 20, borderRadius: 12, marginBottom: 16, alignItems: 'center', borderWidth: 1, borderColor: '#222' },
-  cardRed: { backgroundColor: '#FF2222', borderColor: '#FF2222' },
-  cardIcon: { fontSize: 24, color: '#FFF', marginBottom: 8 },
-  cardText: { color: '#FFF', fontWeight: '600', fontSize: 14 },
-  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
-  sectionTitle: { color: '#FFF', fontSize: 18, fontWeight: 'bold' },
-  seeAll: { color: '#FF2222', fontSize: 12 },
-  projectList: { marginBottom: 40 },
-  projectItem: { flexDirection: 'row', backgroundColor: '#111', padding: 12, borderRadius: 12, alignItems: 'center', marginBottom: 12, borderWidth: 1, borderColor: '#222' },
-  projectImagePlaceholder: { width: 50, height: 50, borderRadius: 8, backgroundColor: '#222', justifyContent: 'center', alignItems: 'center' },
-  projectInfo: { flex: 1, marginLeft: 12 },
-  projectName: { color: '#FFF', fontWeight: 'bold', fontSize: 15 },
-  projectClient: { color: '#888', fontSize: 13, marginTop: 2 },
-  projectDate: { color: '#555', fontSize: 11, marginTop: 2 },
-  arrow: { color: '#555', fontSize: 18 }
+  container: { flex: 1, backgroundColor: '#F6F3EA' },
+  content: { padding: 20, paddingTop: 52, paddingBottom: 48 },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  brand: { color: '#650606', fontSize: 30, fontWeight: '900' },
+  subtitle: { color: '#716666', fontSize: 12 },
+  logout: { color: '#650606', fontWeight: '800', padding: 10 },
+  hero: { backgroundColor: '#650606', borderRadius: 24, padding: 22, marginTop: 22 },
+  heroTag: { color: '#D9F36A', fontSize: 11, fontWeight: '900', letterSpacing: 1.3 },
+  heroTitle: { color: '#fff', fontSize: 26, lineHeight: 31, fontWeight: '900', marginTop: 10 },
+  heroText: { color: '#EBDDDD', marginTop: 10, lineHeight: 20 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginTop: 18 },
+  action: { width: '48%', minHeight: 112, borderRadius: 18, backgroundColor: '#fff', padding: 16, marginBottom: 12, borderWidth: 1, borderColor: '#E6DED3', justifyContent: 'space-between' },
+  actionPrimary: { backgroundColor: '#D9F36A', borderColor: '#D9F36A' },
+  actionIcon: { color: '#650606', fontWeight: '900', fontSize: 22 },
+  actionText: { color: '#302424', fontWeight: '800' },
+  actionPrimaryText: { color: '#27331F' },
+  sectionTitle: { fontSize: 20, fontWeight: '900', color: '#302424', marginTop: 18, marginBottom: 12 },
+  empty: { backgroundColor: '#fff', padding: 22, borderRadius: 18, borderWidth: 1, borderColor: '#E6DED3' },
+  emptyTitle: { color: '#302424', fontWeight: '900', fontSize: 16 },
+  emptyText: { color: '#766B6B', marginTop: 5 },
+  project: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 16, padding: 14, marginBottom: 10, borderWidth: 1, borderColor: '#E6DED3' },
+  projectIcon: { width: 44, height: 44, borderRadius: 12, backgroundColor: '#650606', alignItems: 'center', justifyContent: 'center', marginRight: 12 },
+  projectIconText: { color: '#D9F36A', fontWeight: '900' },
+  projectName: { color: '#302424', fontWeight: '900' },
+  projectMeta: { color: '#786D6D', fontSize: 12, marginTop: 3 },
+  arrow: { color: '#650606', fontSize: 28 },
 });
