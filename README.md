@@ -1,56 +1,74 @@
-# Welcome to your Expo app 👋
+# GJS Montagem de Móveis
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Aplicativo Expo/React Native para gestão de clientes, projetos, medidas, materiais e orçamentos da GJS.
 
-## Get started
+## Stack
 
-1. Install dependencies
+- Expo 57
+- React 19.2
+- React Native 0.86
+- Expo Router
+- Supabase Auth + PostgreSQL + Row Level Security
 
-   ```bash
-   npm install
-   ```
+## Segurança
 
-2. Start the app
+O app usa somente a **publishable key** do Supabase no cliente. Nunca use `service_role` ou uma secret key no aplicativo.
 
-   ```bash
-   npx expo start
-   ```
+Todas as tabelas de negócio no Supabase estão com RLS habilitado e políticas de ownership por `user_id`. Usuários autenticados só podem acessar os próprios registros.
 
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Desenvolvimento
 
 ```bash
-npm run reset-project
+npm ci
+npm run typecheck
+npm run build:web
+npm start
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+No Codespaces:
 
-### Other setup steps
+```bash
+npx expo start --web --clear
+```
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+## Variáveis opcionais
 
-## Learn more
+O cliente possui valores públicos de fallback para o projeto atual. Para facilitar rotação e ambientes diferentes, configure:
 
-To learn more about developing your project with Expo, look at the following resources:
+```env
+EXPO_PUBLIC_SUPABASE_URL=https://SEU-PROJETO.supabase.co
+EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
+```
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+Essas variáveis são públicas por design. Não coloque chaves secretas em variáveis `EXPO_PUBLIC_*`.
 
-## Join the community
+## Estrutura
 
-Join our community of developers creating universal apps.
+- `src/app/login.tsx`: autenticação
+- `src/app/home.tsx`: projetos recentes
+- `src/app/novo-projeto.tsx`: criação de cliente + projeto
+- `src/app/materiais.tsx`: catálogo privado de materiais
+- `src/app/medidas.tsx`: medidas do projeto
+- `src/app/orcamento.tsx`: orçamento e histórico
+- `src/lib/backend.ts`: integração HTTPS com Supabase
+- `supabase/migrations/`: histórico de schema e RLS
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## Modelo de dados
+
+O backend possui tabelas para clientes, projetos, medidas, módulos, peças, materiais, materiais de projeto, orçamentos, itens de orçamento e histórico.
+
+Valores monetários são armazenados em centavos. Medidas usam milímetros e possuem validações no banco.
+
+## Verificação antes de publicar
+
+1. `npm ci`
+2. `npm run typecheck`
+3. `npm run build:web`
+4. Testar cadastro/login em Android e web
+5. Confirmar RLS no Supabase Advisors
+6. Confirmar políticas de backup e restauração
+7. Exigir revisão antes de merge na branch `main`
+
+## Observação sobre sessão
+
+A autenticação atual mantém a sessão em memória. Ao reiniciar o aplicativo, o usuário entra novamente. Isso evita armazenar tokens em armazenamento inseguro enquanto a camada de SecureStore não estiver instalada.
