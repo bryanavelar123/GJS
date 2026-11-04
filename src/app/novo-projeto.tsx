@@ -1,309 +1,112 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
   StyleSheet,
   Text,
-  View,
   TextInput,
   TouchableOpacity,
-  SafeAreaView,
-  StatusBar,
-  Alert,
-  ScrollView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { createProject, getSession } from '@/lib/backend';
 
 export default function NewProjectScreen() {
   const router = useRouter();
-
-  // Estados do formulário
   const [projectName, setProjectName] = useState('');
   const [client, setClient] = useState('');
   const [environment, setEnvironment] = useState('');
   const [description, setDescription] = useState('');
+  const [saving, setSaving] = useState(false);
 
-  // Botão voltar
-  const handleBack = () => {
-    router.back();
-  };
+  const salvar = async () => {
+    try {
+      if (!getSession()) {
+        router.replace('/login');
+        return;
+      }
+      if (projectName.trim().length < 2) throw new Error('Informe o nome do projeto.');
+      if (client.trim().length < 2) throw new Error('Informe o nome do cliente.');
+      if (!environment.trim()) throw new Error('Informe o ambiente.');
 
-  // Botão avançar
-  const handleAdvance = () => {
-    if (
-      !projectName.trim() ||
-      !client.trim() ||
-      !environment.trim()
-    ) {
-      Alert.alert(
-        'Erro',
-        'Por favor, preencha os campos obrigatórios (Nome, Cliente e Ambiente).'
-      );
-      return;
-    }
+      setSaving(true);
+      const project = await createProject({
+        name: projectName,
+        clientName: client,
+        environment,
+        description,
+      });
 
-    const projectData = {
-      nomeDoProjeto: projectName.trim(),
-      cliente: client.trim(),
-      ambiente: environment.trim(),
-      descricao: description.trim(),
-    };
-
-    console.log('Dados do Projeto:', projectData);
-
-    Alert.alert(
-      'Sucesso',
-      `Projeto "${projectData.nomeDoProjeto}" criado com sucesso!`,
-      [
+      Alert.alert('Projeto salvo', 'O projeto foi gravado com segurança.', [
         {
-          text: 'OK',
+          text: 'Adicionar medidas',
+          onPress: () => router.replace({ pathname: '/medidas-projeto', params: { projectId: project.id, name: project.name } } as any),
         },
-      ]
-    );
+      ]);
+    } catch (error) {
+      Alert.alert('Não foi possível salvar', error instanceof Error ? error.message : 'Tente novamente.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar
-        barStyle="light-content"
-        backgroundColor="#000000"
-      />
+    <KeyboardAvoidingView style={styles.page} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        <TouchableOpacity onPress={() => router.back()}><Text style={styles.back}>‹ Voltar</Text></TouchableOpacity>
+        <Text style={styles.title}>Novo projeto</Text>
+        <Text style={styles.subtitle}>Dados essenciais para iniciar o atendimento.</Text>
 
-      {/* CABEÇALHO */}
-      <View style={styles.header}>
-
-        {/* BOTÃO VOLTAR */}
-        <TouchableOpacity
-          style={styles.closeButton}
-          onPress={handleBack}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.closeText}>✕</Text>
-        </TouchableOpacity>
-
-        <Text style={styles.headerTitle}>
-          Novo Projeto
-        </Text>
-
-        <View style={styles.placeholder} />
-      </View>
-
-      {/* FORMULÁRIO */}
-      <ScrollView
-        contentContainerStyle={styles.formContainer}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
-
-        {/* NOME DO PROJETO */}
-        <Text style={styles.label}>
-          Nome do projeto
-        </Text>
-
+        <Field label="Nome do projeto" value={projectName} setValue={setProjectName} placeholder="Ex.: Cozinha planejada" />
+        <Field label="Cliente" value={client} setValue={setClient} placeholder="Nome do cliente" />
+        <Field label="Ambiente" value={environment} setValue={setEnvironment} placeholder="Ex.: Cozinha" />
+        <Text style={styles.label}>Descrição</Text>
         <TextInput
-          style={styles.input}
-          placeholder="Ex: Cozinha planejada"
-          placeholderTextColor="#444"
-          value={projectName}
-          onChangeText={setProjectName}
-          autoCapitalize="sentences"
-        />
-
-        {/* CLIENTE */}
-        <Text style={styles.label}>
-          Cliente
-        </Text>
-
-        <View style={styles.dropdownContainer}>
-          <TextInput
-            style={styles.dropdownInput}
-            placeholder="Selecione o cliente"
-            placeholderTextColor="#444"
-            value={client}
-            onChangeText={setClient}
-            autoCapitalize="words"
-          />
-
-          <Text style={styles.arrowIcon}>
-            ▼
-          </Text>
-        </View>
-
-        {/* AMBIENTE */}
-        <Text style={styles.label}>
-          Ambiente
-        </Text>
-
-        <View style={styles.dropdownContainer}>
-          <TextInput
-            style={styles.dropdownInput}
-            placeholder="Selecione o ambiente"
-            placeholderTextColor="#444"
-            value={environment}
-            onChangeText={setEnvironment}
-            autoCapitalize="sentences"
-          />
-
-          <Text style={styles.arrowIcon}>
-            ▼
-          </Text>
-        </View>
-
-        {/* DESCRIÇÃO */}
-        <Text style={styles.label}>
-          Descrição
-        </Text>
-
-        <TextInput
-          style={[
-            styles.input,
-            styles.textArea,
-          ]}
-          placeholder="Digite uma descrição do projeto..."
-          placeholderTextColor="#444"
-          multiline={true}
-          numberOfLines={4}
-          textAlignVertical="top"
+          style={[styles.input, styles.area]}
           value={description}
           onChangeText={setDescription}
+          placeholder="Observações do projeto"
+          placeholderTextColor="#8B7B7B"
+          multiline
+          maxLength={10000}
+          textAlignVertical="top"
         />
 
-      </ScrollView>
-
-      {/* BOTÃO INFERIOR */}
-      <View style={styles.footer}>
-        <TouchableOpacity
-          style={styles.button}
-          onPress={handleAdvance}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.buttonText}>
-            Avançar
-          </Text>
+        <TouchableOpacity style={styles.button} onPress={salvar} disabled={saving}>
+          {saving ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Salvar projeto</Text>}
         </TouchableOpacity>
-      </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
+  );
+}
 
-    </SafeAreaView>
+function Field({ label, value, setValue, placeholder }: { label: string; value: string; setValue: (v: string) => void; placeholder: string }) {
+  return (
+    <>
+      <Text style={styles.label}>{label}</Text>
+      <TextInput
+        style={styles.input}
+        value={value}
+        onChangeText={setValue}
+        placeholder={placeholder}
+        placeholderTextColor="#8B7B7B"
+        maxLength={160}
+      />
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#000000',
-  },
-
-  // HEADER
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 18,
-    borderBottomWidth: 1,
-    borderBottomColor: '#111111',
-  },
-
-  closeButton: {
-    width: 32,
-    height: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  closeText: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '300',
-  },
-
-  headerTitle: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-
-  placeholder: {
-    width: 32,
-    height: 32,
-  },
-
-  // FORMULÁRIO
-  formContainer: {
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 120,
-  },
-
-  label: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '600',
-    marginBottom: 8,
-    marginTop: 16,
-  },
-
-  input: {
-    backgroundColor: '#111111',
-    color: '#FFFFFF',
-    borderRadius: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 14,
-    fontSize: 14,
-    borderWidth: 1,
-    borderColor: '#1F1F1F',
-  },
-
-  // CAMPOS COM SETA
-  dropdownContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#111111',
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#1F1F1F',
-    paddingRight: 12,
-  },
-
-  dropdownInput: {
-    flex: 1,
-    color: '#FFFFFF',
-    paddingHorizontal: 12,
-    paddingVertical: 14,
-    fontSize: 14,
-  },
-
-  arrowIcon: {
-    color: '#444444',
-    fontSize: 12,
-  },
-
-  textArea: {
-    height: 120,
-    paddingTop: 14,
-  },
-
-  // RODAPÉ
-  footer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: '#000000',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-  },
-
-  // BOTÃO AVANÇAR
-  button: {
-    backgroundColor: '#E51C24',
-    borderRadius: 6,
-    paddingVertical: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  buttonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
+  page: { flex: 1, backgroundColor: '#F6F3EA' },
+  content: { padding: 20, paddingTop: 50, paddingBottom: 40 },
+  back: { color: '#650606', fontWeight: '800', marginBottom: 18 },
+  title: { color: '#302424', fontSize: 30, fontWeight: '900' },
+  subtitle: { color: '#786D6D', marginTop: 4, marginBottom: 20 },
+  label: { color: '#302424', fontWeight: '800', marginTop: 14, marginBottom: 7 },
+  input: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#DED4C9', borderRadius: 12, padding: 14, color: '#241A1A' },
+  area: { minHeight: 120 },
+  button: { backgroundColor: '#650606', borderRadius: 14, padding: 16, alignItems: 'center', marginTop: 24 },
+  buttonText: { color: '#fff', fontWeight: '900', fontSize: 16 },
 });
