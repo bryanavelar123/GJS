@@ -1,521 +1,135 @@
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
-  View,
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  StyleSheet,
-  ScrollView,
-  Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { createQuote, formatCents, getSession, parseCurrencyToCents } from '@/lib/backend';
 
-export default function NovoOrcamentoScreen() {
+type MoneyFieldProps = {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+};
+
+function safeCents(value: string) {
+  try {
+    return parseCurrencyToCents(value);
+  } catch {
+    return 0;
+  }
+}
+
+export default function OrcamentoScreen() {
   const router = useRouter();
-
-  const [projeto, setProjeto] = useState('');
-  const [cliente, setCliente] = useState('');
-
+  const [projectName, setProjectName] = useState('');
+  const [clientName, setClientName] = useState('');
   const [mdf, setMdf] = useState('');
   const [ferragens, setFerragens] = useState('');
   const [acessorios, setAcessorios] = useState('');
   const [maoDeObra, setMaoDeObra] = useState('');
   const [outros, setOutros] = useState('');
+  const [saving, setSaving] = useState(false);
 
-  /*
-   * =====================================================
-   * VOLTAR
-   * =====================================================
-   *
-   * Se existir uma página anterior, volta para ela.
-   *
-   * Se não existir histórico, vai para a página inicial.
-   */
-  const voltar = () => {
-    if (router.canGoBack()) {
-      router.back();
-    } else {
-      router.replace('/');
+  const total = useMemo(
+    () => [mdf, ferragens, acessorios, maoDeObra, outros].reduce((sum, value) => sum + safeCents(value), 0),
+    [mdf, ferragens, acessorios, maoDeObra, outros],
+  );
+
+  const salvar = async () => {
+    try {
+      if (!getSession()) {
+        router.replace('/login');
+        return;
+      }
+      if (projectName.trim().length < 2) throw new Error('Informe o nome do projeto.');
+      if (clientName.trim().length < 2) throw new Error('Informe o nome do cliente.');
+
+      const costs = [
+        { description: 'MDF e chapas', cents: parseCurrencyToCents(mdf) },
+        { description: 'Ferragens', cents: parseCurrencyToCents(ferragens) },
+        { description: 'Acessórios', cents: parseCurrencyToCents(acessorios) },
+        { description: 'Mão de obra', cents: parseCurrencyToCents(maoDeObra) },
+        { description: 'Outros', cents: parseCurrencyToCents(outros) },
+      ];
+
+      if (costs.every((item) => item.cents === 0)) {
+        throw new Error('Informe ao menos um valor para o orçamento.');
+      }
+
+      setSaving(true);
+      await createQuote({ projectName, clientName, costs });
+
+      Alert.alert('Orçamento salvo', `Total: ${formatCents(costs.reduce((s, item) => s + item.cents, 0))}`, [
+        { text: 'OK', onPress: () => router.replace('/home') },
+      ]);
+    } catch (error) {
+      Alert.alert('Não foi possível salvar', error instanceof Error ? error.message : 'Tente novamente.');
+    } finally {
+      setSaving(false);
     }
-  };
-
-  /*
-   * =====================================================
-   * CONVERTER VALOR
-   * =====================================================
-   */
-  const numero = (valor) => {
-    if (!valor) {
-      return 0;
-    }
-
-    let valorLimpo = String(valor)
-      .replace(/R\$/gi, '')
-      .replace(/\s/g, '');
-
-    /*
-     * Se tiver ponto e vírgula:
-     * 1.500,50 -> 1500.50
-     */
-    if (
-      valorLimpo.includes('.') &&
-      valorLimpo.includes(',')
-    ) {
-      valorLimpo = valorLimpo
-        .replace(/\./g, '')
-        .replace(',', '.');
-    } else if (valorLimpo.includes(',')) {
-      /*
-       * 1500,50 -> 1500.50
-       */
-      valorLimpo = valorLimpo.replace(',', '.');
-    }
-
-    valorLimpo = valorLimpo.replace(/[^\d.-]/g, '');
-
-    return Number(valorLimpo) || 0;
-  };
-
-  /*
-   * =====================================================
-   * TOTAL
-   * =====================================================
-   */
-  const total = useMemo(() => {
-    return (
-      numero(mdf) +
-      numero(ferragens) +
-      numero(acessorios) +
-      numero(maoDeObra) +
-      numero(outros)
-    );
-  }, [
-    mdf,
-    ferragens,
-    acessorios,
-    maoDeObra,
-    outros,
-  ]);
-
-  /*
-   * =====================================================
-   * MOEDA
-   * =====================================================
-   */
-  const formatarMoeda = (valor) => {
-    return valor.toLocaleString('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    });
-  };
-
-  /*
-   * =====================================================
-   * CRIAR ORÇAMENTO
-   * =====================================================
-   */
-  const criarOrcamento = () => {
-    if (!projeto.trim()) {
-      Alert.alert(
-        'Campo obrigatório',
-        'Digite o nome do projeto.'
-      );
-      return;
-    }
-
-    if (!cliente.trim()) {
-      Alert.alert(
-        'Campo obrigatório',
-        'Digite o nome do cliente.'
-      );
-      return;
-    }
-
-    Alert.alert(
-      'Orçamento criado!',
-      `O orçamento "${projeto}" foi criado com sucesso.\n\nValor total: ${formatarMoeda(total)}`,
-      [
-        {
-          text: 'OK',
-          onPress: () => {
-            voltar();
-          },
-        },
-      ]
-    );
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.page} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      <TouchableOpacity onPress={() => router.back()}><Text style={styles.back}>‹ Voltar</Text></TouchableOpacity>
+      <Text style={styles.title}>Novo orçamento</Text>
+      <Text style={styles.subtitle}>Valores são armazenados em centavos para evitar erros de arredondamento.</Text>
 
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
+      <Text style={styles.label}>Projeto</Text>
+      <TextInput style={styles.input} value={projectName} onChangeText={setProjectName} placeholder="Nome do projeto" placeholderTextColor="#8B7B7B" maxLength={160} />
 
-        {/* =================================================
-            CABEÇALHO
-        ================================================= */}
+      <Text style={styles.label}>Cliente</Text>
+      <TextInput style={styles.input} value={clientName} onChangeText={setClientName} placeholder="Nome do cliente" placeholderTextColor="#8B7B7B" maxLength={160} />
 
-        <View style={styles.header}>
+      <MoneyField label="MDF e chapas" value={mdf} onChange={setMdf} />
+      <MoneyField label="Ferragens" value={ferragens} onChange={setFerragens} />
+      <MoneyField label="Acessórios" value={acessorios} onChange={setAcessorios} />
+      <MoneyField label="Mão de obra" value={maoDeObra} onChange={setMaoDeObra} />
+      <MoneyField label="Outros" value={outros} onChange={setOutros} />
 
-          <TouchableOpacity
-            onPress={voltar}
-            style={styles.backButton}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.backBtn}>
-              ‹
-            </Text>
-          </TouchableOpacity>
+      <Text style={styles.totalLabel}>Total</Text>
+      <Text style={styles.total}>{formatCents(total)}</Text>
 
-          <Text style={styles.title}>
-            Novo Orçamento
-          </Text>
-
-          <View style={styles.headerSpace} />
-
-        </View>
-
-        {/* =================================================
-            INFORMAÇÕES DO PROJETO
-        ================================================= */}
-
-        <View style={styles.card}>
-
-          <Text style={styles.sectionTitle}>
-            Informações do projeto
-          </Text>
-
-          <Text style={styles.label}>
-            Nome do projeto
-          </Text>
-
-          <TextInput
-            value={projeto}
-            onChangeText={setProjeto}
-            placeholder="Ex: Cozinha Moderna"
-            placeholderTextColor="#666666"
-            style={styles.input}
-            autoCapitalize="sentences"
-            selectionColor="#FF2222"
-          />
-
-          <Text style={styles.label}>
-            Cliente
-          </Text>
-
-          <TextInput
-            value={cliente}
-            onChangeText={setCliente}
-            placeholder="Ex: Mariana"
-            placeholderTextColor="#666666"
-            style={styles.input}
-            autoCapitalize="words"
-            selectionColor="#FF2222"
-          />
-
-        </View>
-
-        {/* =================================================
-            CUSTOS
-        ================================================= */}
-
-        <View style={styles.card}>
-
-          <Text style={styles.sectionTitle}>
-            Custos do orçamento
-          </Text>
-
-          <CampoValor
-            label="MDF e chapas"
-            value={mdf}
-            onChangeText={setMdf}
-          />
-
-          <CampoValor
-            label="Ferragens"
-            value={ferragens}
-            onChangeText={setFerragens}
-          />
-
-          <CampoValor
-            label="Acessórios"
-            value={acessorios}
-            onChangeText={setAcessorios}
-          />
-
-          <CampoValor
-            label="Mão de obra"
-            value={maoDeObra}
-            onChangeText={setMaoDeObra}
-          />
-
-          <CampoValor
-            label="Outros"
-            value={outros}
-            onChangeText={setOutros}
-          />
-
-        </View>
-
-        {/* =================================================
-            TOTAL
-        ================================================= */}
-
-        <View style={styles.totalCard}>
-
-          <View style={styles.totalInfo}>
-
-            <Text style={styles.totalLabel}>
-              Valor total
-            </Text>
-
-            <Text style={styles.totalDescription}>
-              Soma de todos os custos
-            </Text>
-
-          </View>
-
-          <Text style={styles.totalValue}>
-            {formatarMoeda(total)}
-          </Text>
-
-        </View>
-
-        {/* =================================================
-            BOTÃO
-        ================================================= */}
-
-        <TouchableOpacity
-          style={styles.createButton}
-          onPress={criarOrcamento}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.createButtonText}>
-            Criar Orçamento
-          </Text>
-        </TouchableOpacity>
-
-      </ScrollView>
-
-    </View>
+      <TouchableOpacity style={styles.button} onPress={salvar} disabled={saving}>
+        {saving ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Salvar orçamento</Text>}
+      </TouchableOpacity>
+    </ScrollView>
   );
 }
 
-/*
- * =========================================================
- * CAMPO DE VALOR
- * =========================================================
- */
-
-function CampoValor({
-  label,
-  value,
-  onChangeText,
-}) {
+function MoneyField({ label, value, onChange }: MoneyFieldProps) {
   return (
-    <View style={styles.field}>
-
-      <Text style={styles.label}>
-        {label}
-      </Text>
-
+    <>
+      <Text style={styles.label}>{label}</Text>
       <TextInput
-        value={value}
-        onChangeText={onChangeText}
-        placeholder="R$ 0,00"
-        placeholderTextColor="#666666"
-        keyboardType="decimal-pad"
         style={styles.input}
-        selectionColor="#FF2222"
+        value={value}
+        onChangeText={onChange}
+        placeholder="R$ 0,00"
+        placeholderTextColor="#8B7B7B"
+        keyboardType="decimal-pad"
+        maxLength={20}
       />
-
-    </View>
+    </>
   );
 }
-
-/*
- * =========================================================
- * ESTILOS
- * =========================================================
- */
 
 const styles = StyleSheet.create({
-
-  /*
-   * TELA
-   */
-  container: {
-    flex: 1,
-    backgroundColor: '#000000',
-  },
-
-  scroll: {
-    flex: 1,
-  },
-
-  scrollContent: {
-    paddingHorizontal: 20,
-    paddingTop: 30,
-    paddingBottom: 50,
-  },
-
-  /*
-   * =======================================================
-   * HEADER
-   * =======================================================
-   */
-
-  header: {
-    width: '100%',
-    height: 50,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 24,
-  },
-
-  backButton: {
-    width: 45,
-    height: 45,
-    justifyContent: 'center',
-    alignItems: 'flex-start',
-  },
-
-  backBtn: {
-    color: '#FFFFFF',
-    fontSize: 40,
-    fontWeight: '300',
-    lineHeight: 42,
-  },
-
-  headerSpace: {
-    width: 45,
-  },
-
-  title: {
-    flex: 1,
-    color: '#FFFFFF',
-    fontSize: 20,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-
-  /*
-   * =======================================================
-   * CARDS
-   * =======================================================
-   */
-
-  card: {
-    backgroundColor: '#111111',
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#222222',
-    marginBottom: 14,
-  },
-
-  sectionTitle: {
-    color: '#FFFFFF',
-    fontSize: 17,
-    fontWeight: 'bold',
-    marginBottom: 18,
-  },
-
-  /*
-   * =======================================================
-   * CAMPOS
-   * =======================================================
-   */
-
-  field: {
-    marginBottom: 14,
-  },
-
-  label: {
-    color: '#AAAAAA',
-    fontSize: 13,
-    marginBottom: 7,
-  },
-
-  input: {
-    width: '100%',
-    minHeight: 46,
-    backgroundColor: '#080808',
-    borderWidth: 1,
-    borderColor: '#333333',
-    borderRadius: 8,
-    color: '#FFFFFF',
-    fontSize: 15,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-  },
-
-  /*
-   * =======================================================
-   * TOTAL
-   * =======================================================
-   */
-
-  totalCard: {
-    backgroundColor: '#111111',
-    borderRadius: 12,
-    padding: 18,
-    borderWidth: 1,
-    borderColor: '#222222',
-    marginBottom: 18,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-
-  totalInfo: {
-    flex: 1,
-  },
-
-  totalLabel: {
-    color: '#FF2222',
-    fontSize: 17,
-    fontWeight: 'bold',
-  },
-
-  totalDescription: {
-    color: '#777777',
-    fontSize: 12,
-    marginTop: 4,
-  },
-
-  totalValue: {
-    color: '#FF2222',
-    fontSize: 21,
-    fontWeight: 'bold',
-    marginLeft: 15,
-  },
-
-  /*
-   * =======================================================
-   * BOTÃO
-   * =======================================================
-   */
-
-  createButton: {
-    width: '100%',
-    backgroundColor: '#FF2222',
-    minHeight: 54,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  createButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-
+  page: { flex: 1, backgroundColor: '#F6F3EA' },
+  content: { padding: 20, paddingTop: 50, paddingBottom: 50 },
+  back: { color: '#650606', fontWeight: '800', marginBottom: 18 },
+  title: { color: '#302424', fontSize: 30, fontWeight: '900' },
+  subtitle: { color: '#786D6D', marginTop: 5, marginBottom: 18, lineHeight: 20 },
+  label: { color: '#302424', fontWeight: '800', marginTop: 13, marginBottom: 7 },
+  input: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#DED4C9', borderRadius: 12, padding: 14, color: '#241A1A' },
+  totalLabel: { color: '#786D6D', marginTop: 24, fontWeight: '700' },
+  total: { color: '#650606', fontSize: 30, fontWeight: '900', marginTop: 3 },
+  button: { backgroundColor: '#650606', borderRadius: 14, padding: 16, alignItems: 'center', marginTop: 22 },
+  buttonText: { color: '#fff', fontWeight: '900', fontSize: 16 },
 });
