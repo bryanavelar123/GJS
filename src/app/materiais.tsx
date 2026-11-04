@@ -1,323 +1,244 @@
-import React, { useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 import {
-  View,
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+  StyleSheet,
   Text,
   TextInput,
-  ScrollView,
   TouchableOpacity,
-  StyleSheet,
+  View,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
+import {
+  createMaterial,
+  formatCents,
+  getSession,
+  listMaterials,
+  Material,
+  parseCurrencyToCents,
+} from '@/lib/backend';
 
-type Categoria = 'MDF' | 'Ferragens' | 'Acessórios';
-
-const materiais = {
-  MDF: [
-    { nome: 'Branco TX', marca: 'Duratex', cor: '#FFF' },
-    { nome: 'Cinza Cristal', marca: 'Arauco', cor: '#A2A2A2' },
-    { nome: 'Carvalho Americano', marca: 'Duratex', cor: '#C2A685' },
-    { nome: 'Preto TX', marca: 'Duratex', cor: '#222' },
-    { nome: 'Nogueira', marca: 'Arauco', cor: '#6B4934' },
-  ],
-
-  Ferragens: [
-    { nome: 'Dobradiça 35mm', marca: 'FGV', cor: '#777' },
-    { nome: 'Corrediça Telescópica 45cm', marca: 'FGV', cor: '#555' },
-    { nome: 'Corrediça Oculta 45cm', marca: 'Hettich', cor: '#333' },
-    { nome: 'Suporte para Prateleira', marca: 'FGV', cor: '#999' },
-    { nome: 'Parafuso 4x40mm', marca: 'Jomarca', cor: '#AAA' },
-  ],
-
-  Acessórios: [
-    { nome: 'Puxador Preto 128mm', marca: 'Zen Design', cor: '#181818' },
-    { nome: 'Puxador Cromado 128mm', marca: 'Zen Design', cor: '#C0C0C0' },
-    { nome: 'Pé Regulável 10cm', marca: 'FGV', cor: '#333' },
-    { nome: 'Passa-Fio Preto', marca: 'FGV', cor: '#111' },
-    { nome: 'Amortecedor de Porta', marca: 'Hettich', cor: '#777' },
-  ],
-};
+const categories: Material['category'][] = ['MDF', 'Ferragens', 'Acessórios', 'Outro'];
 
 export default function MateriaisScreen() {
   const router = useRouter();
+  const [items, setItems] = useState<Material[]>([]);
+  const [category, setCategory] = useState<Material['category']>('MDF');
+  const [name, setName] = useState('');
+  const [brand, setBrand] = useState('');
+  const [price, setPrice] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
-  const [categoria, setCategoria] = useState<Categoria>('MDF');
-  const [busca, setBusca] = useState('');
-
-  const listaFiltrada = useMemo(() => {
-    const lista = materiais[categoria];
-
-    if (!busca.trim()) {
-      return lista;
+  const carregar = useCallback(async () => {
+    if (!getSession()) {
+      router.replace('/login');
+      return;
     }
 
-    const texto = busca.toLowerCase();
+    try {
+      setLoading(true);
+      setItems(await listMaterials());
+    } catch (error) {
+      Alert.alert(
+        'Erro ao carregar',
+        error instanceof Error ? error.message : 'Falha de conexão.',
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, [router]);
 
-    return lista.filter(
-      (item) =>
-        item.nome.toLowerCase().includes(texto) ||
-        item.marca.toLowerCase().includes(texto)
-    );
-  }, [categoria, busca]);
+  useFocusEffect(
+    useCallback(() => {
+      void carregar();
+    }, [carregar]),
+  );
 
-  const trocarCategoria = (novaCategoria: Categoria) => {
-    setCategoria(novaCategoria);
-    setBusca('');
+  const adicionar = async () => {
+    try {
+      if (name.trim().length < 2) {
+        throw new Error('Informe o nome do material.');
+      }
+
+      setSaving(true);
+      await createMaterial({
+        category,
+        name,
+        brand,
+        unitPriceCents: parseCurrencyToCents(price),
+      });
+
+      setName('');
+      setBrand('');
+      setPrice('');
+      await carregar();
+    } catch (error) {
+      Alert.alert(
+        'Não foi possível salvar',
+        error instanceof Error ? error.message : 'Tente novamente.',
+      );
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView
+      style={styles.page}
+      contentContainerStyle={styles.content}
+      keyboardShouldPersistTaps="handled"
+    >
+      <TouchableOpacity onPress={() => router.back()}>
+        <Text style={styles.back}>‹ Voltar</Text>
+      </TouchableOpacity>
 
-      {/* CABEÇALHO */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.backBtn}>＜</Text>
-        </TouchableOpacity>
+      <Text style={styles.title}>Materiais</Text>
+      <Text style={styles.subtitle}>Catálogo privado da sua conta.</Text>
 
-        <Text style={styles.title}>Materiais</Text>
-
-        <View style={{ width: 20 }} />
+      <View style={styles.categories}>
+        {categories.map((item) => (
+          <TouchableOpacity
+            key={item}
+            onPress={() => setCategory(item)}
+            style={[styles.pill, category === item && styles.pillActive]}
+          >
+            <Text
+              style={[
+                styles.pillText,
+                category === item && styles.pillTextActive,
+              ]}
+            >
+              {item}
+            </Text>
+          </TouchableOpacity>
+        ))}
       </View>
 
-      {/* ABAS */}
-      <View style={styles.tabs}>
-
-        <TouchableOpacity
-          style={[
-            styles.tab,
-            categoria === 'MDF' && styles.tabActive,
-          ]}
-          onPress={() => trocarCategoria('MDF')}
-        >
-          <Text
-            style={
-              categoria === 'MDF'
-                ? styles.tabTextActive
-                : styles.tabText
-            }
-          >
-            MDF
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[
-            styles.tab,
-            categoria === 'Ferragens' && styles.tabActive,
-          ]}
-          onPress={() => trocarCategoria('Ferragens')}
-        >
-          <Text
-            style={
-              categoria === 'Ferragens'
-                ? styles.tabTextActive
-                : styles.tabText
-            }
-          >
-            Ferragens
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[
-            styles.tab,
-            categoria === 'Acessórios' && styles.tabActive,
-          ]}
-          onPress={() => trocarCategoria('Acessórios')}
-        >
-          <Text
-            style={
-              categoria === 'Acessórios'
-                ? styles.tabTextActive
-                : styles.tabText
-            }
-          >
-            Acessórios
-          </Text>
-        </TouchableOpacity>
-
-      </View>
-
-      {/* BUSCA */}
+      <Text style={styles.label}>Nome</Text>
       <TextInput
-        style={styles.search}
-        placeholder="🔍 Buscar material..."
-        placeholderTextColor="#555"
-        value={busca}
-        onChangeText={setBusca}
+        style={styles.input}
+        value={name}
+        onChangeText={setName}
+        placeholder="Ex.: Branco TX"
+        placeholderTextColor="#8B7B7B"
+        maxLength={160}
       />
 
-      {/* CATEGORIA ATUAL */}
-      <Text style={styles.categoryTitle}>
-        {categoria}
-      </Text>
+      <Text style={styles.label}>Marca</Text>
+      <TextInput
+        style={styles.input}
+        value={brand}
+        onChangeText={setBrand}
+        placeholder="Ex.: Duratex"
+        placeholderTextColor="#8B7B7B"
+        maxLength={160}
+      />
 
-      {/* LISTA */}
-      <ScrollView
-        style={styles.list}
-        showsVerticalScrollIndicator={false}
+      <Text style={styles.label}>Preço unitário</Text>
+      <TextInput
+        style={styles.input}
+        value={price}
+        onChangeText={setPrice}
+        placeholder="R$ 0,00"
+        placeholderTextColor="#8B7B7B"
+        keyboardType="decimal-pad"
+        maxLength={20}
+      />
+
+      <TouchableOpacity
+        style={styles.button}
+        onPress={adicionar}
+        disabled={saving}
       >
+        {saving ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text style={styles.buttonText}>Adicionar material</Text>
+        )}
+      </TouchableOpacity>
 
-        {listaFiltrada.length === 0 ? (
-          <View style={styles.empty}>
-            <Text style={styles.emptyText}>
-              Nenhum item encontrado.
+      <Text style={styles.section}>Seu catálogo</Text>
+
+      {loading ? (
+        <ActivityIndicator color="#650606" />
+      ) : items.length === 0 ? (
+        <Text style={styles.empty}>Nenhum material cadastrado.</Text>
+      ) : (
+        items.map((item) => (
+          <View key={item.id} style={styles.item}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.itemName}>{item.name}</Text>
+              <Text style={styles.itemMeta}>
+                {item.category}
+                {item.brand ? ` · ${item.brand}` : ''}
+              </Text>
+            </View>
+            <Text style={styles.price}>
+              {formatCents(Number(item.unit_price_cents))}
             </Text>
           </View>
-        ) : (
-          listaFiltrada.map((mat, idx) => (
-            <TouchableOpacity
-              key={idx}
-              style={styles.item}
-              activeOpacity={0.7}
-              onPress={() => {
-                console.log('Selecionado:', mat.nome);
-              }}
-            >
-              <View
-                style={[
-                  styles.colorPreview,
-                  { backgroundColor: mat.cor },
-                ]}
-              />
-
-              <View style={styles.info}>
-                <Text style={styles.nome}>
-                  {mat.nome}
-                </Text>
-
-                <Text style={styles.marca}>
-                  {mat.marca}
-                </Text>
-              </View>
-
-              <Text style={styles.arrow}>＞</Text>
-            </TouchableOpacity>
-          ))
-        )}
-
-      </ScrollView>
-    </View>
+        ))
+      )}
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#000000',
-    padding: 20,
-    paddingTop: 50,
-  },
-
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-
-  backBtn: {
-    color: '#FFF',
-    fontSize: 24,
-  },
-
-  title: {
-    color: '#FFF',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-
-  tabs: {
-    flexDirection: 'row',
-    marginBottom: 16,
-  },
-
-  tab: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    marginRight: 8,
-    backgroundColor: '#111',
-  },
-
-  tabActive: {
-    backgroundColor: '#FF2222',
-  },
-
-  tabTextActive: {
-    color: '#FFF',
-    fontWeight: 'bold',
-  },
-
-  tabText: {
-    color: '#888',
-  },
-
-  search: {
-    backgroundColor: '#111',
-    color: '#FFF',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 15,
+  page: { flex: 1, backgroundColor: '#F6F3EA' },
+  content: { padding: 20, paddingTop: 50, paddingBottom: 50 },
+  back: { color: '#650606', fontWeight: '800', marginBottom: 18 },
+  title: { color: '#302424', fontSize: 30, fontWeight: '900' },
+  subtitle: { color: '#786D6D', marginTop: 5, marginBottom: 18 },
+  categories: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 },
+  pill: {
+    backgroundColor: '#fff',
     borderWidth: 1,
-    borderColor: '#222',
+    borderColor: '#DED4C9',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 999,
   },
-
-  categoryTitle: {
-    color: '#FFF',
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginBottom: 10,
+  pillActive: { backgroundColor: '#D9F36A', borderColor: '#D9F36A' },
+  pillText: { color: '#5C5050', fontWeight: '700' },
+  pillTextActive: { color: '#27331F' },
+  label: { color: '#302424', fontWeight: '800', marginTop: 13, marginBottom: 7 },
+  input: {
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#DED4C9',
+    borderRadius: 12,
+    padding: 14,
+    color: '#241A1A',
   },
-
-  list: {
-    flex: 1,
+  button: {
+    backgroundColor: '#650606',
+    borderRadius: 14,
+    padding: 15,
+    alignItems: 'center',
+    marginTop: 18,
   },
-
+  buttonText: { color: '#fff', fontWeight: '900' },
+  section: {
+    color: '#302424',
+    fontSize: 20,
+    fontWeight: '900',
+    marginTop: 28,
+    marginBottom: 12,
+  },
+  empty: { color: '#786D6D' },
   item: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#111',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 10,
+    backgroundColor: '#fff',
+    padding: 14,
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#222',
+    borderColor: '#E6DED3',
+    marginBottom: 9,
   },
-
-  colorPreview: {
-    width: 40,
-    height: 40,
-    borderRadius: 6,
-  },
-
-  info: {
-    flex: 1,
-    marginLeft: 12,
-  },
-
-  nome: {
-    color: '#FFF',
-    fontWeight: 'bold',
-  },
-
-  marca: {
-    color: '#666',
-    fontSize: 12,
-    marginTop: 2,
-  },
-
-  arrow: {
-    color: '#444',
-    fontSize: 16,
-  },
-
-  empty: {
-    alignItems: 'center',
-    paddingTop: 40,
-  },
-
-  emptyText: {
-    color: '#666',
-    fontSize: 14,
-  },
+  itemName: { color: '#302424', fontWeight: '900' },
+  itemMeta: { color: '#786D6D', fontSize: 12, marginTop: 3 },
+  price: { color: '#650606', fontWeight: '900', marginLeft: 10 },
 });
