@@ -42,7 +42,7 @@ export default function NewProjectScreen() {
       Alert.alert('Projeto salvo', 'O projeto foi gravado com segurança.', [
         {
           text: 'Adicionar medidas',
-          onPress: () => router.replace({ pathname: '/medidas', params: { projectId: project.id, name: project.name } } as any),
+          onPress: () => router.replace({ pathname: '/medidas-projeto', params: { projectId: project.id, name: project.name } } as any),
         },
       ]);
     } catch (error) {
