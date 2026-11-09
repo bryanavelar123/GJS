@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Linking, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 
 export default function HomeScreen() {
@@ -36,9 +36,18 @@ export default function HomeScreen() {
         </TouchableOpacity>
       </View>
 
+      <TouchableOpacity
+        style={styles.contactButton}
+        onPress={() => Linking.openURL('https://wa.me/5541999739327?text=Ol%C3%A1%21%20Gostaria%20de%20solicitar%20um%20or%C3%A7amento%20com%20a%20GJS.')
+          .catch(() => Alert.alert('WhatsApp', 'Não foi possível abrir o contato.'))}
+        accessibilityRole="button"
+      >
+        <Text style={styles.contactText}>Solicitar orçamento pelo WhatsApp ↗</Text>
+      </TouchableOpacity>
+
       {/* Seção de Recentes */}
       <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Projetos recentes</Text>
+        <Text style={styles.sectionTitle}>Exemplos de projetos</Text>
         <TouchableOpacity><Text style={styles.seeAll}>Ver todos ＞</Text></TouchableOpacity>
       </View>
 
@@ -63,6 +72,8 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
+  contactButton: { backgroundColor: '#C1121F', padding: 16, alignItems: 'center', borderRadius: 12, marginBottom: 28 },
+  contactText: { color: '#FFFFFF', fontWeight: '800', fontSize: 14, textAlign: 'center' },
   container: { flex: 1, backgroundColor: '#000000', padding: 20, paddingTop: 50 },
   header: { marginBottom: 24 },
   welcome: { color: '#FFF', fontSize: 24, fontWeight: 'bold' },
