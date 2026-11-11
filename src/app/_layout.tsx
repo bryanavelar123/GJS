@@ -1,19 +1,20 @@
 import React from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { View } from 'react-native';
 
-export default function GJSLayout() {
+// Layout sem dependências adicionais no caminho de inicialização do Android.
+export default function RootLayout() {
   return (
-    <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#000000' }}>
+    <View style={{ flex: 1, backgroundColor: '#000000' }}>
       <StatusBar style="light" backgroundColor="#000000" />
       <Stack
         screenOptions={{
           headerShown: false,
+          animation: 'none',
           contentStyle: { backgroundColor: '#000000' },
-          animation: 'fade_from_bottom',
         }}
       />
-    </GestureHandlerRootView>
+    </View>
   );
 }
