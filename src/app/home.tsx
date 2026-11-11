@@ -158,6 +158,75 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={[s.content, wide && { maxWidth: 850, alignSelf: 'center' }]}>
+          <View style={s.booking}>
+            <SectionTitle
+              tag="ORÇAMENTO E CONTATO"
+              title="Orçamento e contato"
+              description="Solicite seu orçamento logo aqui ou fale diretamente com a GJS pelo WhatsApp."
+              onDark
+            />
+            <TouchableOpacity
+              accessibilityRole="button"
+              style={s.contactShortcut}
+              onPress={() => void whatsapp('Olá! Gostaria de solicitar um orçamento com a GJS Montagem de Móveis.')}
+            >
+              <Text style={s.contactShortcutText}>Contato rápido: (41) 99973-9327 ↗</Text>
+            </TouchableOpacity>
+            <View style={s.form}>
+              <Text style={s.formTitle}>Solicitar orçamento</Text>
+              <Text style={s.formPhone}>Atendimento pelo WhatsApp{'\n'}{PHONE_DISPLAY}</Text>
+
+              <Text style={s.inputLabel}>Seu nome *</Text>
+              <TextInput
+                style={s.input} placeholder="Como podemos te chamar?"
+                placeholderTextColor="#777777" value={nome} onChangeText={setNome}
+                autoCapitalize="words"
+              />
+              <Text style={s.inputLabel}>Seu telefone</Text>
+              <TextInput
+                style={s.input} placeholder="(00) 00000-0000"
+                placeholderTextColor="#777777" value={telefone} onChangeText={setTelefone}
+                keyboardType="phone-pad"
+              />
+              <Text style={s.inputLabel}>Tipo de serviço *</Text>
+              <View style={s.options}>
+                {services.map((service) => (
+                  <TouchableOpacity
+                    accessibilityRole="radio"
+                    accessibilityState={{ selected: servico === service.name }}
+                    key={service.name}
+                    style={[s.option, servico === service.name && s.optionSelected]}
+                    onPress={() => setServico(service.name)}
+                  >
+                    <Text style={[s.optionText, servico === service.name && s.optionTextSelected]}>
+                      {service.name}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+              <Text style={s.inputLabel}>Data desejada</Text>
+              <TextInput
+                style={s.input} placeholder="Ex.: a combinar"
+                placeholderTextColor="#777777" value={data} onChangeText={setData}
+              />
+              <Text style={s.inputLabel}>Cidade e bairro</Text>
+              <TextInput
+                style={s.input} placeholder="Cidade e bairro do atendimento"
+                placeholderTextColor="#777777" value={bairro} onChangeText={setBairro}
+              />
+              <Text style={s.inputLabel}>Conte um pouco sobre o móvel</Text>
+              <TextInput
+                style={[s.input, s.textArea]}
+                placeholder="Quantidade, tamanho, marca ou outras informações..."
+                placeholderTextColor="#777777"
+                value={detalhes} onChangeText={setDetalhes} multiline textAlignVertical="top"
+              />
+              <Button title="Enviar orçamento pelo WhatsApp ↗" onPress={sendQuote} dark />
+              <Text style={s.formNotice}>O envio só acontece depois que você confirmar a mensagem no WhatsApp.</Text>
+            </View>
+          </View>
+
+
           <View style={s.hero}>
             <Text style={s.heroLabel}>MONTAGEM PROFISSIONAL DE MÓVEIS</Text>
             <Text style={[s.heroTitle, wide && { fontSize: 54, lineHeight: 60 }]}>
@@ -256,67 +325,6 @@ export default function HomeScreen() {
             ))}
           </View>
 
-          <View style={s.booking}>
-            <SectionTitle
-              tag="ORÇAMENTO E CONTATO"
-              title="Vamos montar seu próximo projeto?"
-              description="Preencha os dados. O WhatsApp abrirá com sua mensagem pronta para revisar e enviar."
-              onDark
-            />
-            <View style={s.form}>
-              <Text style={s.formTitle}>Solicitar orçamento</Text>
-              <Text style={s.formPhone}>Atendimento pelo WhatsApp{'\n'}{PHONE_DISPLAY}</Text>
-
-              <Text style={s.inputLabel}>Seu nome *</Text>
-              <TextInput
-                style={s.input} placeholder="Como podemos te chamar?"
-                placeholderTextColor="#777777" value={nome} onChangeText={setNome}
-                autoCapitalize="words"
-              />
-              <Text style={s.inputLabel}>Seu telefone</Text>
-              <TextInput
-                style={s.input} placeholder="(00) 00000-0000"
-                placeholderTextColor="#777777" value={telefone} onChangeText={setTelefone}
-                keyboardType="phone-pad"
-              />
-              <Text style={s.inputLabel}>Tipo de serviço *</Text>
-              <View style={s.options}>
-                {services.map((service) => (
-                  <TouchableOpacity
-                    accessibilityRole="radio"
-                    accessibilityState={{ selected: servico === service.name }}
-                    key={service.name}
-                    style={[s.option, servico === service.name && s.optionSelected]}
-                    onPress={() => setServico(service.name)}
-                  >
-                    <Text style={[s.optionText, servico === service.name && s.optionTextSelected]}>
-                      {service.name}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-              <Text style={s.inputLabel}>Data desejada</Text>
-              <TextInput
-                style={s.input} placeholder="Ex.: a combinar"
-                placeholderTextColor="#777777" value={data} onChangeText={setData}
-              />
-              <Text style={s.inputLabel}>Cidade e bairro</Text>
-              <TextInput
-                style={s.input} placeholder="Cidade e bairro do atendimento"
-                placeholderTextColor="#777777" value={bairro} onChangeText={setBairro}
-              />
-              <Text style={s.inputLabel}>Conte um pouco sobre o móvel</Text>
-              <TextInput
-                style={[s.input, s.textArea]}
-                placeholder="Quantidade, tamanho, marca ou outras informações..."
-                placeholderTextColor="#777777"
-                value={detalhes} onChangeText={setDetalhes} multiline textAlignVertical="top"
-              />
-              <Button title="Enviar orçamento pelo WhatsApp ↗" onPress={sendQuote} dark />
-              <Text style={s.formNotice}>O envio só acontece depois que você confirmar a mensagem no WhatsApp.</Text>
-            </View>
-          </View>
-
           <View style={s.section}>
             <SectionTitle tag="DÚVIDAS FREQUENTES" title="Respondemos para você." />
             {faqs.map(([question, answer], index) => (
@@ -411,6 +419,8 @@ const s = StyleSheet.create({
   portfolioEmoji: { fontSize: 65 },
   portfolioCaption: { padding: 16 },
   stepCard: { backgroundColor: C.white, padding: 21, borderWidth: 1, borderColor: C.border, borderTopColor: C.red, borderTopWidth: 3, borderRadius: 12, marginBottom: 13 },
+  contactShortcut: { borderWidth: 1, borderColor: '#FFFFFF', borderRadius: 14, paddingHorizontal: 17, paddingVertical: 15, marginBottom: 17, alignItems: 'center' },
+  contactShortcutText: { color: '#FFFFFF', fontWeight: '900', fontSize: 15, textAlign: 'center' },
   booking: { backgroundColor: C.redDark, padding: 22, paddingVertical: 51 },
   form: { backgroundColor: C.white, padding: 20, borderRadius: 20 },
   formTitle: { color: C.black, fontWeight: '900', fontSize: 23 },
