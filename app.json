@@ -2,9 +2,9 @@
   "expo": {
     "name": "GJS Montagem de Móveis",
     "slug": "gjs",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/logo-gjs.jpg",
     "scheme": "gjs",
     "userInterfaceStyle": "dark",
     "ios": {
@@ -13,17 +13,17 @@
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#000000",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "foregroundImage": "./assets/images/logo-gjs.jpg",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
       "package": "com.gjs.moveisplanejados",
-      "versionCode": 3
+      "versionCode": 4
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/logo-gjs.jpg"
     },
     "plugins": [
       "expo-router",
@@ -31,8 +31,8 @@
         "expo-splash-screen",
         {
           "backgroundColor": "#000000",
-          "image": "./assets/images/splash-icon.png",
-          "imageWidth": 76
+          "image": "./assets/images/logo-gjs.jpg",
+          "imageWidth": 110
         }
       ]
     ],
