@@ -11,7 +11,7 @@ const eas = json('eas.json');
 assert.equal(pkg.main, 'expo-router/entry', 'Entrada do Expo Router incorreta');
 assert.match(pkg.dependencies.expo, /^~54\./, 'Versão Expo deve ser SDK 54 nesta ramificação');
 assert.equal(app.android.package, 'com.gjs.moveisplanejados');
-assert.equal(app.android.versionCode, 1);
+assert.equal(app.android.versionCode, 2, 'VersionCode do APK v1.0.1');
 assert.match(app.android.package, /^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$/);
 assert.equal(eas.build.preview.android.buildType, 'apk');
 assert.equal(eas.build.preview.distribution, 'internal');
