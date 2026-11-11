@@ -21,7 +21,7 @@ export default function SobreGJS() {
         <Text style={styles.back}>‹ Voltar</Text>
       </TouchableOpacity>
       <Text style={styles.brand}>GJS</Text>
-      <Text style={styles.title}>Móveis Planejados</Text>
+      <Text style={styles.title}>Montagem de Móveis</Text>
       <Text style={styles.text}>Projetos, medidas, materiais e orçamentos em um só lugar.</Text>
       <TouchableOpacity style={styles.button} onPress={abrirWhatsApp} accessibilityRole="button">
         <Text style={styles.buttonText}>Contato: (41) 99973-9327 ↗</Text>
