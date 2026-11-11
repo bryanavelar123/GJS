@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import {
   Alert, Linking, Platform, ScrollView, StyleSheet, Text, TextInput,
+  StatusBar as NativeStatusBar,
   TouchableOpacity, View, useWindowDimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const PHONE = '5541999739327';
 const PHONE_DISPLAY = '(41) 99973-9327';
@@ -95,6 +97,10 @@ function SectionTitle({ tag, title, description, onDark = false }: {
 export default function HomeScreen() {
   const router = useRouter();
   const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  const statusBarHeight = Platform.OS === 'android' ? (NativeStatusBar.currentHeight || 24) : 0;
+  const topPadding = Math.max(12, insets.top + 10, statusBarHeight + 9);
+  const bottomPadding = Math.max(20, insets.bottom + 20, Platform.OS === 'android' ? 58 : 0);
   const wide = width >= 740;
 
   const [nome, setNome] = useState('');
@@ -130,7 +136,7 @@ export default function HomeScreen() {
   return (
     <View style={s.root}>
       <StatusBar style="dark" backgroundColor={C.white} />
-      <View style={s.topBar}>
+      <View style={[s.topBar, { paddingTop: topPadding }]}>
         <View style={s.brandWrap}>
           <View style={s.logo}><Text style={s.logoLabel}>GJS</Text></View>
           <View style={{ flexShrink: 1 }}>
@@ -372,7 +378,7 @@ export default function HomeScreen() {
         accessibilityRole="button"
         accessibilityLabel="Falar pelo WhatsApp"
         onPress={() => void whatsapp('Olá! Gostaria de solicitar um orçamento com a GJS.')}
-        style={s.floating}
+        style={[s.floating, { bottom: bottomPadding }]}
       >
         <Text style={s.floatingText}>WhatsApp ↗</Text>
       </TouchableOpacity>
