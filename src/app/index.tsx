@@ -6,7 +6,7 @@ export default function Index() {
   useEffect(() => {
     const timer = setTimeout(() => {
       router.replace('/home');
-    }, 2500);
+    }, 1000);
 
     return () => clearTimeout(timer);
   }, []);
@@ -23,7 +23,7 @@ export default function Index() {
       </Text>
 
       <Text style={styles.subtitle}>
-        MÓVEIS PLANEJADOS
+        MONTAGEM DE MÓVEIS
       </Text>
 
       <View style={styles.slogan}>
@@ -81,7 +81,7 @@ const styles = StyleSheet.create({
   },
 
   slogan: {
-    marginTop: 350,
+    marginTop: 80,
     alignItems: 'center',
     gap: 10,
   },
