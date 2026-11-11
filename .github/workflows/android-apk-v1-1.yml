@@ -1,9 +1,9 @@
-name: GJS Android v1.0.1 APK testado
+name: GJS Montagem Android v1.0.2
 
 on:
   push:
     branches:
-      - fix/android-startup-v1-1-20261111
+      - feature/gjs-visual-site-android-v102
   workflow_dispatch:
 
 permissions:
@@ -34,7 +34,10 @@ jobs:
         run: |
           npm run verify:android
           npx expo config --type public --json > /tmp/gjs-config.json
-          node -e "const c=require('/tmp/gjs-config.json');if(c.android.versionCode!==2 || c.newArchEnabled!==false) process.exit(1)"
+          node -e "const c=require('/tmp/gjs-config.json');if(c.android.versionCode!==3 || c.newArchEnabled!==false) process.exit(1)"
+      - name: Verificar compilação Web
+        run: npx expo export --platform web --output-dir /tmp/gjs-web-build
+
       - name: Gerar Android
         run: npx expo prebuild --platform android --clean --no-install
       - name: Compilar APK release
@@ -64,37 +67,37 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: GJS-Android-v1-1-diagnostico
+          name: GJS-Android-v1-2-diagnostico
           path: diagnostics/
           if-no-files-found: warn
           retention-days: 10
       - name: Preparar APK e SHA
         run: |
           mkdir -p dist
-          cp android/app/build/outputs/apk/release/app-release.apk dist/GJS-Moveis-Planejados-v1.0.1.apk
+          cp android/app/build/outputs/apk/release/app-release.apk dist/GJS-Montagem-de-Moveis-v1.0.2.apk
           cd dist
-          sha256sum GJS-Moveis-Planejados-v1.0.1.apk > SHA256.txt
+          sha256sum GJS-Montagem-de-Moveis-v1.0.2.apk > SHA256.txt
       - name: Publicar APK (somente após teste aprovado)
         uses: actions/upload-artifact@v4
         with:
-          name: GJS-Android-v1-1-apk-testado
+          name: GJS-Android-v1-2-apk-testado
           path: dist/
           if-no-files-found: error
           retention-days: 30
       - name: Criar link público permanente do APK de teste
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: gjs-android-v1.0.1-test
-          target_commitish: fix/android-startup-v1-1-20261111
-          name: GJS Android 1.0.1 (teste)
+          tag_name: gjs-android-v1.0.2-test
+          target_commitish: feature/gjs-visual-site-android-v102
+          name: GJS Android 1.0.2 — visual Montagem (teste)
           prerelease: true
           draft: false
           fail_on_unmatched_files: true
           body: |
-            APK Android de TESTE. Abertura verificada em emulador Android 10.
-            Versão gerada a partir da branch fix/android-startup-v1-1-20261111.
+            APK Android de TESTE. Novo visual vermelho, preto e branco; inclui serviços, portfólio, orçamento e acesso às ferramentas de projetos. Abertura verificada em emulador Android 10.
+            Versão gerada a partir da branch feature/gjs-visual-site-android-v102.
             Instale após remover a v1 antiga (assinatura de desenvolvimento diferente).
             Não usar como release de Play Store.
           files: |
-            dist/GJS-Moveis-Planejados-v1.0.1.apk
+            dist/GJS-Montagem-de-Moveis-v1.0.2.apk
             dist/SHA256.txt
