@@ -28,7 +28,7 @@ const services = [
 
 const projects = [
   { symbol: '🪑', title: 'Montagem de móveis', detail: 'Quartos e dormitórios' },
-  { symbol: '🗄️', title: 'Móveis planejados', detail: 'Organização e acabamento' },
+  { symbol: '🗄️', title: 'Montagem de armários', detail: 'Organização e acabamento' },
   { symbol: '📺', title: 'Painel para TV', detail: 'Sala de estar' },
 ];
 
