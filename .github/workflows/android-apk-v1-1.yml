@@ -1,9 +1,9 @@
-name: GJS Montagem Android v1.0.2
+name: GJS Montagem Premium Android v1.0.3
 
 on:
   push:
     branches:
-      - feature/gjs-visual-site-android-v102
+      - feature/gjs-premium-exato-v103
   workflow_dispatch:
 
 permissions:
@@ -34,7 +34,7 @@ jobs:
         run: |
           npm run verify:android
           npx expo config --type public --json > /tmp/gjs-config.json
-          node -e "const c=require('/tmp/gjs-config.json');if(c.android.versionCode!==3 || c.newArchEnabled!==false) process.exit(1)"
+          node -e "const c=require('/tmp/gjs-config.json');if(c.android.versionCode!==4 || c.newArchEnabled!==false) process.exit(1)"
       - name: Verificar compilação Web
         run: npx expo export --platform web --output-dir /tmp/gjs-web-build
 
@@ -67,37 +67,37 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: GJS-Android-v1-2-diagnostico
+          name: GJS-Android-v1-3-diagnostico
           path: diagnostics/
           if-no-files-found: warn
           retention-days: 10
       - name: Preparar APK e SHA
         run: |
           mkdir -p dist
-          cp android/app/build/outputs/apk/release/app-release.apk dist/GJS-Montagem-de-Moveis-v1.0.2.apk
+          cp android/app/build/outputs/apk/release/app-release.apk dist/GJS-Montagem-de-Moveis-v1.0.3.apk
           cd dist
-          sha256sum GJS-Montagem-de-Moveis-v1.0.2.apk > SHA256.txt
+          sha256sum GJS-Montagem-de-Moveis-v1.0.3.apk > SHA256.txt
       - name: Publicar APK (somente após teste aprovado)
         uses: actions/upload-artifact@v4
         with:
-          name: GJS-Android-v1-2-apk-testado
+          name: GJS-Android-v1-3-apk-testado
           path: dist/
           if-no-files-found: error
           retention-days: 30
       - name: Criar link público permanente do APK de teste
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: gjs-android-v1.0.2-test
-          target_commitish: feature/gjs-visual-site-android-v102
+          tag_name: gjs-android-v1.0.3-test
+          target_commitish: feature/gjs-premium-exato-v103
           name: GJS Android 1.0.2 — visual Montagem (teste)
           prerelease: true
           draft: false
           fail_on_unmatched_files: true
           body: |
-            APK Android de TESTE. Novo visual vermelho, preto e branco; inclui serviços, portfólio, orçamento e acesso às ferramentas de projetos. Abertura verificada em emulador Android 10.
-            Versão gerada a partir da branch feature/gjs-visual-site-android-v102.
-            Instale após remover a v1 antiga (assinatura de desenvolvimento diferente).
+            APK Android de TESTE. Nova identidade GJS premium com logo original, orçamento no topo, abas Início, Serviços, Portfólio e Sobre. Imagens ilustrativas e WhatsApp 5541999739327. Abertura verificada em emulador Android 10.
+            Versão gerada a partir da branch feature/gjs-premium-exato-v103.
+            Teste em aparelho Android antes de distribuir. Pode ser necessário desinstalar APK anterior, pois a assinatura de teste pode mudar.
             Não usar como release de Play Store.
           files: |
-            dist/GJS-Montagem-de-Moveis-v1.0.2.apk
+            dist/GJS-Montagem-de-Moveis-v1.0.3.apk
             dist/SHA256.txt
