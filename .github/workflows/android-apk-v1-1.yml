@@ -1,0 +1,103 @@
+name: GJS Montagem Android v1.0.2
+
+on:
+  push:
+    branches:
+      - feature/gjs-visual-site-android-v102
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      CI: "1"
+      EXPO_NO_TELEMETRY: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Habilitar virtualização Android
+        run: |
+          if test -e /dev/kvm; then sudo chmod 666 /dev/kvm; fi
+      - name: Instalar dependências
+        run: npm install --no-audit --no-fund
+      - name: Verificar configuração Android
+        run: |
+          npm run verify:android
+          npx expo config --type public --json > /tmp/gjs-config.json
+          node -e "const c=require('/tmp/gjs-config.json');if(c.android.versionCode!==3 || c.newArchEnabled!==false) process.exit(1)"
+      - name: Verificar compilação Web
+        run: npx expo export --platform web --output-dir /tmp/gjs-web-build
+
+      - name: Gerar Android
+        run: npx expo prebuild --platform android --clean --no-install
+      - name: Compilar APK release
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew :app:assembleRelease --no-daemon
+      - name: Verificar integridade e assinatura
+        run: |
+          APK=android/app/build/outputs/apk/release/app-release.apk
+          test -s "$APK"
+          unzip -t "$APK" | tail -n 1
+          APKSIGNER=$(find "${ANDROID_HOME:-$ANDROID_SDK_ROOT}/build-tools" -type f -name apksigner | sort -V | tail -n 1)
+          "$APKSIGNER" verify --verbose "$APK"
+      - name: Testar abertura em Android 10 (emulador)
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 29
+          target: google_apis
+          arch: x86_64
+          profile: pixel_3a
+          ram-size: 2048M
+          emulator-options: -no-window -gpu swiftshader_indirect -no-audio -no-boot-anim
+          disable-animations: true
+          script: bash scripts/smoke-android-v1-1.sh
+      - name: Publicar relatório do teste
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: GJS-Android-v1-2-diagnostico
+          path: diagnostics/
+          if-no-files-found: warn
+          retention-days: 10
+      - name: Preparar APK e SHA
+        run: |
+          mkdir -p dist
+          cp android/app/build/outputs/apk/release/app-release.apk dist/GJS-Montagem-de-Moveis-v1.0.2.apk
+          cd dist
+          sha256sum GJS-Montagem-de-Moveis-v1.0.2.apk > SHA256.txt
+      - name: Publicar APK (somente após teste aprovado)
+        uses: actions/upload-artifact@v4
+        with:
+          name: GJS-Android-v1-2-apk-testado
+          path: dist/
+          if-no-files-found: error
+          retention-days: 30
+      - name: Criar link público permanente do APK de teste
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: gjs-android-v1.0.2-test
+          target_commitish: feature/gjs-visual-site-android-v102
+          name: GJS Android 1.0.2 — visual Montagem (teste)
+          prerelease: true
+          draft: false
+          fail_on_unmatched_files: true
+          body: |
+            APK Android de TESTE. Novo visual vermelho, preto e branco; inclui serviços, portfólio, orçamento e acesso às ferramentas de projetos. Abertura verificada em emulador Android 10.
+            Versão gerada a partir da branch feature/gjs-visual-site-android-v102.
+            Instale após remover a v1 antiga (assinatura de desenvolvimento diferente).
+            Não usar como release de Play Store.
+          files: |
+            dist/GJS-Montagem-de-Moveis-v1.0.2.apk
+            dist/SHA256.txt

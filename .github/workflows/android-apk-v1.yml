@@ -1,0 +1,71 @@
+name: GJS Android APK v1
+
+on:
+  push:
+    branches:
+      - release/android-apk-v1-20261109
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  android-apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      CI: "1"
+      EXPO_NO_TELEMETRY: "1"
+    steps:
+      - name: Obter código
+        uses: actions/checkout@v4
+
+      - name: Preparar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Preparar Java para Android
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Instalar dependências
+        run: npm install --no-audit --no-fund
+
+      - name: Validar projeto e WhatsApp
+        run: npm run verify:android
+
+      - name: Validar configuração Expo
+        run: npx expo config --type public --json > /tmp/gjs-expo-config.json
+
+      - name: Gerar projeto nativo Android
+        run: npx expo prebuild --platform android --clean --no-install
+
+      - name: Compilar APK Release standalone
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew :app:assembleRelease --no-daemon --stacktrace
+
+      - name: Verificar APK gerado e assinatura
+        run: |
+          APK=android/app/build/outputs/apk/release/app-release.apk
+          test -s "$APK"
+          unzip -t "$APK" | tail -n 1
+          APKSIGNER=$(find "${ANDROID_HOME:-$ANDROID_SDK_ROOT}/build-tools" -type f -name apksigner | sort -V | tail -n 1)
+          test -n "$APKSIGNER"
+          "$APKSIGNER" verify --verbose "$APK"
+          sha256sum "$APK" | tee APK-SHA256.txt
+          file "$APK"
+
+      - name: Disponibilizar APK e hash
+        uses: actions/upload-artifact@v4
+        with:
+          name: GJS-Android-v1-test-apk
+          path: |
+            android/app/build/outputs/apk/release/app-release.apk
+            APK-SHA256.txt
+          if-no-files-found: error
+          retention-days: 30
