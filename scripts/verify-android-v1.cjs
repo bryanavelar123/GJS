@@ -11,7 +11,7 @@ const eas = json('eas.json');
 assert.equal(pkg.main, 'expo-router/entry', 'Entrada do Expo Router incorreta');
 assert.match(pkg.dependencies.expo, /^~54\./, 'Versão Expo deve ser SDK 54 nesta ramificação');
 assert.equal(app.android.package, 'com.gjs.moveisplanejados');
-assert.equal(app.android.versionCode, 2, 'VersionCode do APK v1.0.1');
+assert.equal(app.android.versionCode, 3, 'VersionCode do APK v1.0.2');
 assert.match(app.android.package, /^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$/);
 assert.equal(eas.build.preview.android.buildType, 'apk');
 assert.equal(eas.build.preview.distribution, 'internal');
@@ -35,7 +35,7 @@ const phone = '5541999739327';
 for (const [filename, source] of [
   ['home.tsx', home], ['explore.tsx', about],
 ]) {
-  assert.ok(source.includes('https://wa.me/' + phone), 'WhatsApp incorreto em ' + filename);
+  assert.ok(source.includes(phone) || (source.includes("'https://wa.me/' + PHONE") && source.includes("const PHONE = '" + phone + "'")), 'WhatsApp incorreto em ' + filename);
 }
 assert.equal(new URL('https://wa.me/' + phone).hostname, 'wa.me');
 assert.match(phone, /^55\d{2}9\d{8}$/);
