@@ -4,7 +4,6 @@ import {
   StatusBar as NativeStatusBar,
   TouchableOpacity, View, useWindowDimensions,
 } from 'react-native';
-import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -95,7 +94,6 @@ function SectionTitle({ tag, title, description, onDark = false }: {
 }
 
 export default function HomeScreen() {
-  const router = useRouter();
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const statusBarHeight = Platform.OS === 'android' ? (NativeStatusBar.currentHeight || 24) : 0;
@@ -338,30 +336,6 @@ export default function HomeScreen() {
             ))}
           </View>
 
-          <View style={s.tools}>
-            <SectionTitle
-              tag="ÁREA DE TRABALHO"
-              title="Ferramentas GJS"
-              description="As funções do aplicativo Android anterior continuam disponíveis."
-              onDark
-            />
-            {[
-              { title: '＋ Novo projeto', path: '/novo-projeto' as const },
-              { title: '📦 Materiais', path: '/materiais' as const },
-              { title: '📐 Medidas', path: '/medidas' as const },
-              { title: '💵 Orçamentos', path: '/orcamento' as const },
-            ].map((tool) => (
-              <TouchableOpacity
-                accessibilityRole="button" key={tool.path}
-                style={s.toolLink}
-                onPress={() => router.push(tool.path)}
-              >
-                <Text style={s.toolText}>{tool.title}</Text>
-                <Text style={s.toolArrow}>›</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-
           <View style={s.footer}>
             <Text style={s.footerBrand}>GJS Montagem de Móveis</Text>
             <Text style={s.footerText}>Montagem, desmontagem e instalação de móveis.</Text>
@@ -455,10 +429,6 @@ const s = StyleSheet.create({
   faqQuestion: { flex: 1, color: C.black, fontSize: 14, fontWeight: '900' },
   faqSign: { color: C.red, fontSize: 23, marginLeft: 8 },
   faqAnswer: { color: C.muted, fontSize: 14, lineHeight: 23, marginTop: 10 },
-  tools: { backgroundColor: '#252525', padding: 22, paddingVertical: 48 },
-  toolLink: { backgroundColor: C.black, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderColor: '#414141', borderWidth: 1, borderRadius: 11, padding: 17, marginBottom: 11 },
-  toolText: { color: C.white, fontWeight: '800', fontSize: 16 },
-  toolArrow: { color: '#FF5963', fontSize: 27 },
   footer: { backgroundColor: C.black, padding: 25, paddingVertical: 40 },
   footerBrand: { color: C.white, fontWeight: '900', fontSize: 21 },
   footerText: { color: '#D6D6D6', marginTop: 13, fontSize: 13 },
