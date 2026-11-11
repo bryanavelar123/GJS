@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "GJS Móveis Planejados",
+    "name": "GJS Montagem de Móveis",
     "slug": "gjs",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "gjs",
@@ -19,7 +19,7 @@
       },
       "predictiveBackGestureEnabled": false,
       "package": "com.gjs.moveisplanejados",
-      "versionCode": 2
+      "versionCode": 3
     },
     "web": {
       "output": "static",
