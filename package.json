@@ -1,6 +1,6 @@
 {
   "name": "gjs-montagem-de-moveis",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "private": true,
   "main": "expo-router/entry",
   "scripts": {
@@ -28,7 +28,8 @@
     "expo-constants": "~18.0.0",
     "expo-linking": "~8.0.0",
     "react-dom": "19.1.0",
-    "react-native-web": "^0.21.0"
+    "react-native-web": "^0.21.0",
+    "expo-image-picker": "~17.0.11"
   },
   "devDependencies": {
     "@types/react": "~19.1.0",
