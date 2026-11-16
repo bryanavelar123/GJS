@@ -1,0 +1,62 @@
+name: Diagnostico Android GJS v1
+
+on:
+  push:
+    branches:
+      - fix/android-crash-diagnostico-20261111
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  emulator-smoke:
+    name: Testar APK no Android 35
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Codigo
+        uses: actions/checkout@v4
+
+      - name: Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Baixar APK v1 que fecha sozinho
+        uses: actions/download-artifact@v4
+        with:
+          name: GJS-Android-v1-test-apk
+          run-id: 42629474759
+          github-token: ${{ github.token }}
+          repository: bryanavelar123/GJS
+          path: downloaded-apk
+
+      - name: Mostrar APK
+        run: |
+          find downloaded-apk -type f -print
+          find downloaded-apk -name '*.apk' -size +1M -print -quit | grep .
+
+      - name: Executar no emulador Android
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          ram-size: 2048M
+          disk-size: 4096M
+          emulator-options: -no-window -gpu swiftshader_indirect -no-audio -no-boot-anim
+          disable-animations: true
+          script: bash scripts/smoke-android-v1.sh
+
+      - name: Logs e captura para diagnostico
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gjs-android-diagnostico-log
+          path: diagnostics/
+          if-no-files-found: warn
+          retention-days: 7
