@@ -1,9 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { Page, GjsHeader, openWhatsApp } from '../components/gjs-premium';
+import { Page, GjsHeader } from '../components/gjs-premium';
+import { escolherFotosDoProjeto } from '../components/gjs-gallery';
 import { PALETTE as P, portfolio } from '../components/gjs-content';
 
 export default function PortfolioScreen() {
+  const [selecionadas, setSelecionadas] = useState<string[]>([]);
+
+  async function abrirFotos() {
+    const fotos = await escolherFotosDoProjeto();
+    if (fotos.length) setSelecionadas((anteriores) => [...anteriores, ...fotos]);
+  }
+
   return (
     <Page current="portfolio">
       <GjsHeader />
@@ -11,19 +19,29 @@ export default function PortfolioScreen() {
         <Text style={s.eyebrow}>GALERIA GJS</Text>
         <Text style={s.title}>Portfólio de Trabalhos</Text>
         <Text style={s.intro}>Exemplos de ambientes e tipos de móveis que podemos atender.</Text>
-        <Text style={s.notice}>Imagens ilustrativas, não são fotografias de obras realizadas pela GJS. Fotos reais poderão ser adicionadas aqui.</Text>
+        <Text style={s.notice}>Toque em uma foto ou no botão abaixo para abrir a pasta de imagens do seu celular. As imagens de exemplo são ilustrativas.</Text>
+        <TouchableOpacity style={s.button} accessibilityRole="button" onPress={() => void abrirFotos()}>
+          <Text style={s.buttonText}>Abrir minhas fotos de projetos  ›</Text>
+        </TouchableOpacity>
+        {selecionadas.length > 0 && (
+          <View style={s.gallery}>
+            <Text style={s.galleryHeading}>Fotos escolhidas nesta sessão</Text>
+            <View style={s.galleryGrid}>
+              {selecionadas.map((uri, index) => (
+                <Image key={uri + index} source={{ uri }} style={s.galleryPhoto} resizeMode="cover" />
+              ))}
+            </View>
+          </View>
+        )}
         {portfolio.map((item) => (
-          <View key={item.id} style={s.card}>
+          <TouchableOpacity key={item.id} style={s.card} accessibilityRole="button" onPress={() => void abrirFotos()} accessibilityLabel={'Abrir fotos para ' + item.title}>
             <Image source={{ uri: item.image }} style={s.photo} resizeMode="cover" />
             <View style={s.cardContent}>
               <Text style={s.cardTitle}>{item.title}</Text>
               <Text style={s.cardSubtitle}>{item.detail}</Text>
             </View>
-          </View>
+          </TouchableOpacity>
         ))}
-        <TouchableOpacity accessibilityRole="button" style={s.button} onPress={() => void openWhatsApp('Olá! Gostaria de solicitar um orçamento para montagem de móveis.')}>
-          <Text style={s.buttonText}>Solicitar orçamento ↗</Text>
-        </TouchableOpacity>
       </View>
     </Page>
   );
@@ -34,6 +52,10 @@ const s = StyleSheet.create({
   title: { color: '#FFFFFF', fontSize: 30, fontWeight: '900', marginTop: 7 },
   intro: { color: '#CECECE', lineHeight: 23, fontSize: 15, marginTop: 11 },
   notice: { color: '#AFAFAF', lineHeight: 19, fontSize: 12, marginTop: 10, marginBottom: 24 },
+  gallery: { marginBottom: 22 },
+  galleryHeading: { color: '#FFFFFF', fontWeight: '900', marginBottom: 12, fontSize: 17 },
+  galleryGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  galleryPhoto: { width: '31%', height: 110, borderRadius: 12, backgroundColor: '#222222' },
   card: { borderWidth: 1, borderColor: '#3C3C3C', borderRadius: 18, overflow: 'hidden', marginBottom: 17, backgroundColor: '#121212' },
   photo: { width: '100%', height: 220, backgroundColor: '#2E2E2E' },
   cardContent: { padding: 17 },
