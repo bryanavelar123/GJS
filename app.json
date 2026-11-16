@@ -2,7 +2,7 @@
   "expo": {
     "name": "GJS Montagem de Móveis",
     "slug": "gjs",
-    "version": "1.0.3",
+    "version": "1.0.4",
     "orientation": "portrait",
     "icon": "./assets/images/logo-gjs.jpg",
     "scheme": "gjs",
@@ -19,7 +19,8 @@
       },
       "predictiveBackGestureEnabled": false,
       "package": "com.gjs.moveisplanejados",
-      "versionCode": 4
+      "versionCode": 5,
+      "softwareKeyboardLayoutMode": "resize"
     },
     "web": {
       "output": "static",
@@ -33,6 +34,14 @@
           "backgroundColor": "#000000",
           "image": "./assets/images/logo-gjs.jpg",
           "imageWidth": 110
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Permitir que a GJS selecione fotos dos seus projetos.",
+          "cameraPermission": false,
+          "microphonePermission": false
         }
       ]
     ],
