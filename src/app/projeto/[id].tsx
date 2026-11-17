@@ -16,7 +16,7 @@ export default function ProjetoGaleriaScreen() {
       <TouchableOpacity onPress={() => router.back()} style={s.back}><Text style={s.backText}>Voltar</Text></TouchableOpacity></View>;
   }
 
-  const imagens: string[] = [...projeto.imagens];
+  const imagens = [...projeto.imagens];
   const largura = Math.min(width, 900);
   return (
     <View style={s.screen}>
@@ -43,7 +43,7 @@ export default function ProjetoGaleriaScreen() {
           >
             {imagens.map((image, index) => (
               <View key={image + index} style={{ width: largura, alignItems: 'center', justifyContent: 'center' }}>
-                <Image source={{ uri: image }} resizeMode="contain" style={{ width: largura - 12, height: '100%' }} />
+                <Image source={image} resizeMode="contain" style={{ width: largura - 12, height: '100%' }} />
               </View>
             ))}
           </ScrollView>
