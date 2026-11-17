@@ -8,12 +8,12 @@ const pkg = json('package.json');
 const eas = json('eas.json');
 
 assert.equal(pkg.main, 'expo-router/entry');
-assert.equal(pkg.version, '1.0.5');
+assert.equal(pkg.version, '1.0.6');
 assert.match(pkg.dependencies.expo, /^~54\./);
 assert.equal(app.name, 'GJS Montagem de Móveis');
-assert.equal(app.version, '1.0.5');
+assert.equal(app.version, '1.0.6');
 assert.equal(app.android.package, 'com.gjs.moveisplanejados');
-assert.equal(app.android.versionCode, 6);
+assert.equal(app.android.versionCode, 7);
 assert.equal(eas.build.preview.android.buildType, 'apk');
 assert.equal(eas.build.preview.distribution, 'internal');
 assert.ok(fs.existsSync(app.icon), 'Logo GJS ausente');
@@ -59,9 +59,25 @@ assert.ok(home.includes("Estado: "));
 
 assert.match(home, /keyboardType="number-pad"/);
 assert.match(home, /keyboardType="phone-pad"/);
-assert.match(home, /escolherFotosDoProjeto/);
-assert.match(portfolio, /escolherFotosDoProjeto/);
-assert.ok(!portfolio.includes("openWhatsApp"), 'Projetos não devem abrir o WhatsApp');
+assert.ok(!home.includes("escolherFotosDoProjeto"), 'Clique em projeto deve abrir álbum interno');
+assert.ok(!portfolio.includes("escolherFotosDoProjeto"), 'Portfólio não deve abrir fotos do celular');
+assert.ok(!portfolio.includes("openWhatsApp"), 'Portfólio não deve abrir WhatsApp');
+assert.ok(home.includes("'/projeto/[id]'"));
+assert.ok(portfolio.includes("'/projeto/[id]'"));
+assert.ok(fs.existsSync('src/app/projeto/[id].tsx'), 'Tela de galeria inexistente');
+const galeria = read('src/app/projeto/[id].tsx');
+assert.ok(galeria.includes('pagingEnabled'), 'Galeria precisa permitir deslizar entre fotos');
+assert.ok(galeria.includes('source={image}'), 'Galeria deve usar imagens locais');
+const photosByProject = { cozinha: 4, painel: 2, 'guarda-roupa': 2, penteadeira: 1 };
+for (const [project, quantity] of Object.entries(photosByProject)) {
+  assert.ok(common.includes("id: '" + project + "'"), 'Projeto não cadastrado: ' + project);
+  for (let i = 1; i <= quantity; i++) {
+    const file = 'assets/images/portfolio/' + project + '/' + String(i).padStart(2, '0') + '.jpg';
+    assert.ok(fs.existsSync(file), 'Foto original ausente: ' + file);
+    assert.ok(fs.statSync(file).size > 5000, 'Foto muito pequena: ' + file);
+    assert.ok(common.includes("require('../../" + file + "')"), 'Foto não ligada ao álbum: ' + file);
+  }
+}
 assert.equal(pkg.dependencies['expo-image-picker'], '~17.0.11');
 assert.equal(app.android.softwareKeyboardLayoutMode, 'resize');
 assert.ok(fs.existsSync('src/components/gjs-gallery.ts'));
@@ -72,4 +88,4 @@ assert.ok(!home.includes('ÁREA DE TRABALHO'));
 assert.ok(!home.includes('Móveis Planejados'));
 assert.match(about, /Montagem de Móveis/);
 assert.equal(new URL('https://wa.me/5541999739327').hostname, 'wa.me');
-console.log('OK: marca, imagens, WhatsApp, quatro rotas, formulário, e APK v1.0.5.');
+console.log('OK: marca, imagens, WhatsApp, quatro rotas, formulário, e APK v1.0.6.');
