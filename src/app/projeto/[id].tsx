@@ -4,6 +4,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { PALETTE as P, portfolio } from '../../components/gjs-content';
 
+// Expo Web com output estático precisa conhecer previamente os projetos disponíveis.
+export function generateStaticParams() {
+  return portfolio.map((projeto) => ({ id: projeto.id }));
+}
+
 export default function ProjetoGaleriaScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
