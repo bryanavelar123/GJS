@@ -32,7 +32,7 @@ export const services = [
 // Cada projeto possui uma galeria própria. As fotos pessoais serão incluídas nos álbuns correspondentes.
 // Enquanto um álbum não possui arquivos próprios, a capa é meramente ilustrativa.
 export const portfolio = [
-  { id: 'cozinha', title: 'Cozinha', detail: 'Fotos do projeto', image: photos.portfolio1, imagens: [] as string[], ilustrativo: false },
+  { id: 'cozinha', title: 'Cozinha', detail: 'Fotos do projeto', image: photos.portfolio1, imagens: [] as string[], ilustrativo: true },
   { id: 'painel', title: 'Painel', detail: 'Fotos do projeto', image: photos.portfolio3, imagens: [] as string[], ilustrativo: true },
   { id: 'guarda-roupa', title: 'Guarda-roupa', detail: 'Fotos do projeto', image: photos.portfolio2, imagens: [] as string[], ilustrativo: true },
 ] as const;
