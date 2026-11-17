@@ -29,8 +29,10 @@ export const services = [
   { id: 'instalacoes', title: 'Instalações', short: 'Painéis, suportes, nichos e prateleiras.', description: 'Instalação de suportes, painéis de TV, prateleiras e nichos.', image: photos.instalacoes, icon: 'hammer-screwdriver' },
   { id: 'suporte', title: 'Suporte Especializado', short: 'Orientação para seu serviço.', description: 'Tire dúvidas e solicite avaliação do móvel com a GJS.', image: photos.suporte, icon: 'headset' },
 ] as const;
+// Cada projeto possui uma galeria própria. As fotos pessoais serão incluídas nos álbuns correspondentes.
+// Enquanto um álbum não possui arquivos próprios, a capa é meramente ilustrativa.
 export const portfolio = [
-  { id: 'cozinha', title: 'Cozinhas e armários', detail: 'Montagem e instalação', image: photos.portfolio1 },
-  { id: 'guarda-roupa', title: 'Guarda-roupas', detail: 'Montagem e regulagem', image: photos.portfolio2 },
-  { id: 'painel', title: 'Painéis e racks', detail: 'Instalação e acabamento', image: photos.portfolio3 },
+  { id: 'cozinha', title: 'Cozinha', detail: 'Fotos do projeto', image: photos.portfolio1, imagens: [] as string[], ilustrativo: false },
+  { id: 'painel', title: 'Painel', detail: 'Fotos do projeto', image: photos.portfolio3, imagens: [] as string[], ilustrativo: true },
+  { id: 'guarda-roupa', title: 'Guarda-roupa', detail: 'Fotos do projeto', image: photos.portfolio2, imagens: [] as string[], ilustrativo: true },
 ] as const;
