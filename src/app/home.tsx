@@ -248,11 +248,11 @@ export default function HomeScreen() {
         <View style={s.portfolioRow}>
           {portfolio.map((project) => (
             <TouchableOpacity key={project.id} style={s.portfolioCard} onPress={() => router.push({ pathname: '/projeto/[id]', params: { id: project.id } })} accessibilityRole="button" accessibilityLabel={"Ver as fotos do projeto " + project.title}>
-              <Image source={{ uri: project.image }} style={s.portfolioPhoto} resizeMode="cover" />
+              <Image source={project.image} style={s.portfolioPhoto} resizeMode="cover" />
             </TouchableOpacity>
           ))}
         </View>
-        <Text style={s.photoDisclaimer}>Toque em uma imagem para ver o projeto. As fotos ficam dentro do aplicativo.</Text>
+        <Text style={s.photoDisclaimer}>Fotos originais dos trabalhos GJS. Toque em um projeto para ver todas as fotos.</Text>
       </View>
     </Page>
   );
