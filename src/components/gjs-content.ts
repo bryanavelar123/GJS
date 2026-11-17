@@ -29,10 +29,11 @@ export const services = [
   { id: 'instalacoes', title: 'Instalações', short: 'Painéis, suportes, nichos e prateleiras.', description: 'Instalação de suportes, painéis de TV, prateleiras e nichos.', image: photos.instalacoes, icon: 'hammer-screwdriver' },
   { id: 'suporte', title: 'Suporte Especializado', short: 'Orientação para seu serviço.', description: 'Tire dúvidas e solicite avaliação do móvel com a GJS.', image: photos.suporte, icon: 'headset' },
 ] as const;
-// Cada projeto possui uma galeria própria. As fotos pessoais serão incluídas nos álbuns correspondentes.
-// Enquanto um álbum não possui arquivos próprios, a capa é meramente ilustrativa.
+// Fotos originais fornecidas pela GJS. Arquivos locais incluídos no APK para acesso offline.
+// Usamos require literal para que o Metro inclua todas as imagens na compilação.
 export const portfolio = [
-  { id: 'cozinha', title: 'Cozinha', detail: 'Fotos do projeto', image: photos.portfolio1, imagens: [] as string[], ilustrativo: true },
-  { id: 'painel', title: 'Painel', detail: 'Fotos do projeto', image: photos.portfolio3, imagens: [] as string[], ilustrativo: true },
-  { id: 'guarda-roupa', title: 'Guarda-roupa', detail: 'Fotos do projeto', image: photos.portfolio2, imagens: [] as string[], ilustrativo: true },
+  { id: 'cozinha', title: 'Cozinha', detail: '4 fotos originais', image: require('../../assets/images/portfolio/cozinha/01.jpg'), imagens: [require('../../assets/images/portfolio/cozinha/01.jpg'), require('../../assets/images/portfolio/cozinha/02.jpg'), require('../../assets/images/portfolio/cozinha/03.jpg'), require('../../assets/images/portfolio/cozinha/04.jpg')], ilustrativo: false },
+  { id: 'painel', title: 'Painel', detail: '2 fotos originais', image: require('../../assets/images/portfolio/painel/01.jpg'), imagens: [require('../../assets/images/portfolio/painel/01.jpg'), require('../../assets/images/portfolio/painel/02.jpg')], ilustrativo: false },
+  { id: 'guarda-roupa', title: 'Guarda-roupa', detail: '2 fotos originais', image: require('../../assets/images/portfolio/guarda-roupa/01.jpg'), imagens: [require('../../assets/images/portfolio/guarda-roupa/01.jpg'), require('../../assets/images/portfolio/guarda-roupa/02.jpg')], ilustrativo: false },
+  { id: 'penteadeira', title: 'Penteadeira', detail: '1 foto original', image: require('../../assets/images/portfolio/penteadeira/01.jpg'), imagens: [require('../../assets/images/portfolio/penteadeira/01.jpg')], ilustrativo: false },
 ] as const;
