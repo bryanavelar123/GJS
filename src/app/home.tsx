@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Alert, Image, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { escolherFotosDoProjeto } from '../components/gjs-gallery';
 import { Ionicons, Feather } from '@expo/vector-icons';
@@ -23,7 +23,62 @@ function FormOrcamento({ onClose }: { onClose: () => void }) {
   const [complemento, setComplemento] = useState('');
   const [bairro, setBairro] = useState('');
   const [cidade, setCidade] = useState('');
+  const [estado, setEstado] = useState('');
+  const [consultandoCep, setConsultandoCep] = useState(false);
+  const [avisoCep, setAvisoCep] = useState('');
+  const [cepEncontrado, setCepEncontrado] = useState(false);
   const [observacoes, setObservacoes] = useState('');
+
+  // Busca automaticamente ao completar os 8 números e ignora respostas de um CEP anterior.
+  useEffect(() => {
+    const digitos = cep.replace(/\D/g, '');
+    if (digitos.length !== 8) return;
+    let ignorarResposta = false;
+    const controlador = new AbortController();
+    const timer = setTimeout(async () => {
+      setConsultandoCep(true);
+      setAvisoCep('');
+      try {
+        const resposta = await fetch('https://viacep.com.br/ws/' + digitos + '/json/', {
+          signal: controlador.signal,
+        });
+        if (!resposta.ok) throw new Error('Falha na consulta');
+        const dados: {
+          erro?: boolean | string;
+          logradouro?: string;
+          bairro?: string;
+          localidade?: string;
+          uf?: string;
+        } = await resposta.json();
+        if (ignorarResposta) return;
+        if (dados.erro) {
+          setCepEncontrado(false);
+          setAvisoCep('CEP não encontrado. Confira os números ou preencha o endereço manualmente.');
+          return;
+        }
+        setRua(dados.logradouro || '');
+        setBairro(dados.bairro || '');
+        setCidade(dados.localidade || '');
+        setEstado(dados.uf || '');
+        setCepEncontrado(true);
+        setAvisoCep(dados.logradouro
+          ? 'Endereço preenchido automaticamente. Confira os dados e informe o número.'
+          : 'Município e estado encontrados. Informe a rua, o bairro e o número da casa.');
+      } catch {
+        if (!ignorarResposta) {
+          setCepEncontrado(false);
+          setAvisoCep('Não foi possível consultar o CEP. Verifique a internet ou preencha o endereço manualmente.');
+        }
+      } finally {
+        if (!ignorarResposta) setConsultandoCep(false);
+      }
+    }, 350);
+    return () => {
+      ignorarResposta = true;
+      clearTimeout(timer);
+      controlador.abort();
+    };
+  }, [cep]);
 
   function enviar() {
     if (!nome.trim()) {
@@ -36,9 +91,14 @@ function FormOrcamento({ onClose }: { onClose: () => void }) {
       else Alert.alert('Orçamento', 'Informe um CEP válido com 8 números.');
       return;
     }
-    if (!rua.trim() || !numero.trim() || !bairro.trim() || !cidade.trim()) {
-      if (Platform.OS === 'web' && typeof window !== 'undefined') window.alert('Preencha rua, número, bairro e cidade.');
-      else Alert.alert('Orçamento', 'Preencha rua, número, bairro e cidade.');
+    if (consultandoCep) {
+      if (Platform.OS === 'web' && typeof window !== 'undefined') window.alert('Aguarde a consulta do CEP.');
+      else Alert.alert('Orçamento', 'Aguarde a consulta do CEP.');
+      return;
+    }
+    if (!rua.trim() || !numero.trim() || !bairro.trim() || !cidade.trim() || !estado.trim()) {
+      if (Platform.OS === 'web' && typeof window !== 'undefined') window.alert('Preencha rua, número, bairro, município e estado.');
+      else Alert.alert('Orçamento', 'Preencha rua, número, bairro, município e estado.');
       return;
     }
     const message = [
@@ -52,7 +112,8 @@ function FormOrcamento({ onClose }: { onClose: () => void }) {
       'Número: ' + numero.trim(),
       'Complemento: ' + (complemento.trim() || 'Não informado'),
       'Bairro: ' + bairro.trim(),
-      'Cidade: ' + cidade.trim(),
+      'Município: ' + cidade.trim(),
+      'Estado: ' + estado.trim().toUpperCase(),
       'Detalhes: ' + (observacoes.trim() || 'Não informado'),
     ].join('\n');
     void openWhatsApp(message);
@@ -88,12 +149,25 @@ function FormOrcamento({ onClose }: { onClose: () => void }) {
         onChangeText={(valor) => {
           const digitos = valor.replace(/\D/g, '').slice(0, 8);
           setCep(digitos.length > 5 ? digitos.slice(0, 5) + '-' + digitos.slice(5) : digitos);
+          setRua('');
+          setBairro('');
+          setCidade('');
+          setEstado('');
+          setCepEncontrado(false);
+          setAvisoCep('');
+          setConsultandoCep(false);
         }}
         keyboardType="number-pad"
         inputMode="numeric"
         autoComplete="postal-code"
         maxLength={9}
       />
+      {consultandoCep && <Text style={s.cepStatus}>Buscando endereço pelo CEP...</Text>}
+      {!consultandoCep && avisoCep !== '' && (
+        <Text style={[s.cepStatus, !cepEncontrado && s.cepWarning]} accessibilityRole="text">
+          {avisoCep}
+        </Text>
+      )}
       <Text style={s.formLabel}>Rua / endereço *</Text>
       <TextInput style={s.input} placeholder="Ex.: Rua das Flores" placeholderTextColor="#8E8E8E" value={rua} onChangeText={setRua} autoCapitalize="words" returnKeyType="next" />
       <View style={s.addressRow}>
@@ -108,8 +182,10 @@ function FormOrcamento({ onClose }: { onClose: () => void }) {
       </View>
       <Text style={s.formLabel}>Bairro *</Text>
       <TextInput style={s.input} placeholder="Ex.: Centro" placeholderTextColor="#8E8E8E" value={bairro} onChangeText={setBairro} autoCapitalize="words" returnKeyType="next" />
-      <Text style={s.formLabel}>Cidade *</Text>
+      <Text style={s.formLabel}>Município *</Text>
       <TextInput style={s.input} placeholder="Ex.: Curitiba" placeholderTextColor="#8E8E8E" value={cidade} onChangeText={setCidade} autoCapitalize="words" returnKeyType="next" />
+      <Text style={s.formLabel}>Estado (UF) *</Text>
+      <TextInput style={s.input} placeholder="Ex.: PR" placeholderTextColor="#8E8E8E" value={estado} onChangeText={(valor) => setEstado(valor.replace(/[^a-zA-Z]/g, '').slice(0, 2).toUpperCase())} autoCapitalize="characters" maxLength={2} returnKeyType="next" />
       <Text style={s.formLabel}>Informações sobre os móveis</Text>
       <TextInput multiline style={[s.input, s.textArea]} placeholder="Quantidade, modelo, tamanho..." placeholderTextColor="#8E8E8E" value={observacoes} onChangeText={setObservacoes} textAlignVertical="top" autoCapitalize="sentences" />
       <TouchableOpacity accessibilityRole="button" style={s.formSubmit} onPress={enviar}>
@@ -226,6 +302,8 @@ const s = StyleSheet.create({
   formLabel: { color: '#FFFFFF', fontWeight: '800', marginTop: 17, marginBottom: 7, fontSize: 13 },
   input: { borderColor: '#4C4C4C', borderWidth: 1, backgroundColor: '#222222', color: '#FFFFFF', borderRadius: 10, padding: 12 },
   textArea: { height: 99 },
+  cepStatus: { color: '#B0E5BC', fontSize: 12, lineHeight: 18, marginTop: 7 },
+  cepWarning: { color: '#FFB4B4' },
   addressRow: { flexDirection: 'row', gap: 10 },
   numberColumn: { width: '36%' },
   complementColumn: { flex: 1 },
