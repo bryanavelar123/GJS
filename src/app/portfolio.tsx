@@ -22,12 +22,11 @@ export default function PortfolioScreen() {
             accessibilityLabel={'Visualizar fotos do projeto ' + item.title}
             onPress={() => router.push({ pathname: '/projeto/[id]', params: { id: item.id } })}
           >
-            <Image source={{ uri: item.image }} style={s.photo} resizeMode="cover" />
+            <Image source={item.image} style={s.photo} resizeMode="cover" />
             <View style={s.cardContent}>
               <View style={s.cardLabels}>
                 <Text style={s.cardTitle}>{item.title}</Text>
-                <Text style={s.cardSubtitle}>{item.imagens.length ? item.imagens.length + ' fotos para visualizar' : 'Galeria em preparação'}</Text>
-                {item.ilustrativo && <Text style={s.disclaimer}>Capa ilustrativa</Text>}
+                <Text style={s.cardSubtitle}>{item.detail}</Text>
               </View>
               <Ionicons name="chevron-forward" size={24} color="#FFFFFF" />
             </View>
