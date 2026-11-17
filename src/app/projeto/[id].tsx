@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -7,7 +7,8 @@ import { PALETTE as P, portfolio } from '../../components/gjs-content';
 export default function ProjetoGaleriaScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { width } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
+  const carrosselRef = useRef<ScrollView>(null);
   const projeto = portfolio.find((item) => item.id === id);
   const [fotoAtual, setFotoAtual] = useState(0);
 
@@ -18,6 +19,7 @@ export default function ProjetoGaleriaScreen() {
 
   const imagens = [...projeto.imagens];
   const largura = Math.min(width, 900);
+  const alturaFoto = Math.max(280, Math.min(640, height - 260));
   return (
     <View style={s.screen}>
       <View style={s.top}>
@@ -32,25 +34,37 @@ export default function ProjetoGaleriaScreen() {
       {imagens.length > 0 ? (
         <>
           <ScrollView
+            ref={carrosselRef}
             horizontal
             pagingEnabled
             showsHorizontalScrollIndicator={false}
             onMomentumScrollEnd={(event) => {
               setFotoAtual(Math.min(imagens.length - 1, Math.round(event.nativeEvent.contentOffset.x / largura)));
             }}
-            style={s.viewer}
+            style={[s.viewer, { height: alturaFoto }]}
             contentContainerStyle={{ alignItems: 'center' }}
           >
             {imagens.map((image, index) => (
-              <View key={image + index} style={{ width: largura, alignItems: 'center', justifyContent: 'center' }}>
-                <Image source={image} resizeMode="contain" style={{ width: largura - 12, height: '100%' }} />
+              <View key={index} style={{ width: largura, height: alturaFoto, alignItems: 'center', justifyContent: 'center' }}>
+                <Image source={image} resizeMode="contain" style={{ width: largura - 12, height: alturaFoto - 12 }} />
               </View>
             ))}
           </ScrollView>
           <Text style={s.counter}>{fotoAtual + 1} de {imagens.length} — deslize para ver as fotos</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.thumbs} contentContainerStyle={{ gap: 10, paddingHorizontal: 16 }}>
             {imagens.map((image, index) => (
-              <Image key={'thumb-' + index} source={{ uri: image }} style={s.thumb} />
+              <TouchableOpacity
+                key={'thumb-' + index}
+                accessibilityRole="button"
+                accessibilityLabel={'Ver foto ' + (index + 1)}
+                onPress={() => {
+                  carrosselRef.current?.scrollTo({ x: index * largura, animated: true });
+                  setFotoAtual(index);
+                }}
+                style={[s.thumbButton, fotoAtual === index && s.activeThumb]}
+              >
+                <Image source={image} style={s.thumb} />
+              </TouchableOpacity>
             ))}
           </ScrollView>
         </>
@@ -75,10 +89,12 @@ const s = StyleSheet.create({
   topText: { flex: 1 },
   small: { color: P.red, fontSize: 10, letterSpacing: 1.3, fontWeight: '800' },
   heading: { color: '#FFFFFF', fontSize: 24, fontWeight: '900', marginTop: 4 },
-  viewer: { flex: 1, maxHeight: 620 },
+  viewer: { flexGrow: 0 },
   counter: { color: '#E0E0E0', textAlign: 'center', paddingVertical: 12 },
   thumbs: { flexGrow: 0, maxHeight: 80, marginBottom: 12 },
-  thumb: { height: 70, width: 70, borderRadius: 10, backgroundColor: '#262626' },
+  thumbButton: { borderRadius: 10, borderWidth: 2, borderColor: 'transparent' },
+  activeThumb: { borderColor: P.red },
+  thumb: { height: 68, width: 68, borderRadius: 8, backgroundColor: '#262626' },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 25 },
   emptyTitle: { color: '#FFFFFF', fontWeight: '900', fontSize: 22, marginTop: 18 },
   emptyDescription: { color: '#BFBFBF', textAlign: 'center', lineHeight: 22, marginTop: 9 },
