@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { Alert, Image, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { escolherFotosDoProjeto } from '../components/gjs-gallery';
 import { Ionicons, Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Page, GjsHeader, Photo, SectionHeading, ServicePhotoCard, openWhatsApp } from '../components/gjs-premium';
@@ -198,12 +197,6 @@ function FormOrcamento({ onClose }: { onClose: () => void }) {
 export default function HomeScreen() {
   const router = useRouter();
   const [showQuote, setShowQuote] = useState(false);
-  const [fotosProjetos, setFotosProjetos] = useState<string[]>([]);
-
-  async function abrirPastaDeFotos() {
-    const escolhidas = await escolherFotosDoProjeto();
-    if (escolhidas.length) setFotosProjetos((anteriores) => [...anteriores, ...escolhidas]);
-  }
 
   return (
     <Page current="home">
@@ -254,23 +247,12 @@ export default function HomeScreen() {
         <SectionHeading title="Portfólio de Trabalhos" right="Ver mais" onRight={() => router.push('/portfolio')} />
         <View style={s.portfolioRow}>
           {portfolio.map((project) => (
-            <TouchableOpacity key={project.id} style={s.portfolioCard} onPress={() => void abrirPastaDeFotos()} accessibilityRole="button" accessibilityLabel="Abrir a pasta de fotos de projetos">
+            <TouchableOpacity key={project.id} style={s.portfolioCard} onPress={() => router.push({ pathname: '/projeto/[id]', params: { id: project.id } })} accessibilityRole="button" accessibilityLabel={"Ver as fotos do projeto " + project.title}>
               <Image source={{ uri: project.image }} style={s.portfolioPhoto} resizeMode="cover" />
             </TouchableOpacity>
           ))}
         </View>
-        <Text style={s.photoDisclaimer}>Toque em um projeto para abrir as fotos do celular. Fotos acima são ilustrativas.</Text>
-        {fotosProjetos.length > 0 && (
-          <View style={s.selectedGallery}>
-            <Text style={s.selectedTitle}>Fotos selecionadas nesta sessão</Text>
-            <View style={s.portfolioRow}>
-              {fotosProjetos.slice(-3).map((uri, index) => <Image key={uri + index} source={{ uri }} style={s.selectedPhoto} />)}
-            </View>
-          </View>
-        )}
-        <TouchableOpacity accessibilityRole="button" style={s.photosButton} onPress={() => void abrirPastaDeFotos()}>
-          <Text style={s.photosButtonText}>Abrir pasta de fotos dos projetos  ›</Text>
-        </TouchableOpacity>
+        <Text style={s.photoDisclaimer}>Toque em uma imagem para ver o projeto. As fotos ficam dentro do aplicativo.</Text>
       </View>
     </Page>
   );
